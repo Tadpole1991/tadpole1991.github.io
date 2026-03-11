@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Classifieds — Buy, Sell, Trade</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0d0d;--paper:#f2ede6;--cream:#e8e1d6;
+  --red:#d93025;--yellow:#f5c518;--green:#1a7a4a;
+  --muted:#7a7168;--border:#c8bfb0;--white:#fff;--card:#faf7f2;--blue:#1a4fad;
+}
+body{font-family:"IBM Plex Sans",sans-serif;background:var(--paper);color:var(--ink);font-weight:300}
+
+/* HEADER */
+header{background:var(--ink);color:#fff;padding:0 32px;border-bottom:4px solid var(--red);position:sticky;top:0;z-index:90}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:11px;color:rgba(255,255,255,0.4);font-family:"IBM Plex Mono",monospace}
+.header-main{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+.logo{font-family:"Bebas Neue",sans-serif;font-size:44px;letter-spacing:0.04em;color:#fff;text-decoration:none;line-height:1}
+.logo span{color:var(--yellow)}
+.header-tagline{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace}
+.header-actions{display:flex;gap:10px;align-items:center}
+.btn-post{background:var(--red);color:#fff;border:none;padding:10px 20px;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer}
+.btn-post:hover{background:#b5271f}
+.btn-ghost{background:transparent;color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.2);padding:9px 16px;font-size:12px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.6);color:#fff}
+.nav-icon-btn{position:relative;background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:20px;cursor:pointer;padding:8px;display:flex;align-items:center}
+.nav-icon-btn:hover{color:#fff}
+.nav-badge{position:absolute;top:2px;right:2px;background:var(--red);color:#fff;width:16px;height:16px;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace}
+
+/* CAT BAR */
+.cat-bar{background:var(--cream);border-bottom:1px solid var(--border);padding:0 32px;display:flex;overflow-x:auto;scrollbar-width:none}
+.cat-bar::-webkit-scrollbar{display:none}
+.cat-item{padding:12px 16px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:"IBM Plex Sans",sans-serif;transition:all 0.15s}
+.cat-item:hover{color:var(--ink)}
+.cat-item.active{color:var(--red);border-bottom:3px solid var(--red)}
+
+/* HERO */
+.hero{background:var(--ink);padding:40px 32px}
+.hero-label{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow);margin-bottom:12px}
+.hero-headline{font-family:"Bebas Neue",sans-serif;font-size:72px;line-height:0.95;letter-spacing:0.03em;color:#fff;margin-bottom:24px}
+.hero-headline em{color:var(--yellow);font-style:normal}
+.search-row{display:flex}
+.search-input{flex:1;padding:14px 18px;background:#fff;border:none;font-size:14px;color:var(--ink);outline:none}
+.search-input::placeholder{color:var(--muted)}
+.search-select{padding:0 14px;background:var(--cream);border:none;border-left:1px solid var(--border);font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);outline:none;cursor:pointer}
+.search-btn{padding:14px 24px;background:var(--red);border:none;color:#fff;font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer}
+.search-btn:hover{background:#b5271f}
+.hero-stats{display:flex;gap:28px;margin-top:18px}
+.stat{font-family:"IBM Plex Mono",monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.08em}
+.stat strong{color:rgba(255,255,255,0.8);font-size:16px;font-family:"Bebas Neue",sans-serif;display:block}
+
+/* VIEW TABS */
+.view-tabs{background:var(--card);border-bottom:1px solid var(--border);padding:0 32px;display:flex}
+.view-tab{padding:11px 22px;font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;border-top:none;border-left:none;border-right:none;background:none;font-family:"IBM Plex Sans",sans-serif;transition:all 0.15s}
+.view-tab.active{color:var(--red);border-bottom:2px solid var(--red)}
+
+/* LAYOUT */
+.main{display:grid;grid-template-columns:220px 1fr}
+
+/* SIDEBAR */
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:22px 18px}
+.sidebar-title{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.filter-group{margin-bottom:16px}
+.filter-label{display:block;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.price-input{width:100%;padding:8px 10px;border:1px solid var(--border);background:#fff;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink);outline:none;margin-bottom:8px}
+.checkbox-list{display:flex;flex-direction:column;gap:7px}
+.checkbox-item{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12px}
+.checkbox-item input{width:13px;height:13px;accent-color:var(--red)}
+.checkbox-item .count{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
+.apply-filters{width:100%;padding:10px;background:var(--ink);color:#fff;border:none;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-top:6px}
+.apply-filters:hover{background:var(--red)}
+.sidebar-section{margin-bottom:26px}
+
+/* LISTINGS PANEL */
+.listings-panel{padding:24px 26px;background:var(--paper)}
+.listings-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.listings-count{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.listings-count strong{color:var(--ink);font-size:14px}
+.sort-row{display:flex;align-items:center;gap:10px}
+.sort-label{font-size:11px;color:var(--muted)}
+.sort-select{padding:6px 10px;border:1px solid var(--border);background:#fff;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink);outline:none}
+.view-toggle{display:flex}
+.toggle-btn{padding:6px 10px;border:1px solid var(--border);background:#fff;font-size:13px;cursor:pointer;border-right:none}
+.toggle-btn:last-child{border-right:1px solid var(--border)}
+.toggle-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* AD GRID */
+.listings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+
+/* AD CARD */
+.ad-card{background:#fff;border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;transition:transform 0.15s,box-shadow 0.15s}
+.ad-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.1)}
+.ad-image{width:100%;height:160px;background:var(--cream);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ad-image img{width:100%;height:100%;object-fit:cover;display:block}
+.ad-img-placeholder{font-size:44px;opacity:0.22}
+.ad-badge{position:absolute;top:8px;left:8px;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 7px;font-weight:500;z-index:1}
+.badge-new{background:var(--yellow);color:var(--ink)}
+.badge-hot{background:var(--red);color:#fff}
+.badge-sale{background:var(--ink);color:#fff}
+.ad-fav{position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.9);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.15s;z-index:1}
+.ad-card:hover .ad-fav{opacity:1}
+.ad-fav.faved{opacity:1;background:var(--red);color:#fff}
+.ad-body{padding:12px}
+.ad-category{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.ad-title{font-size:14px;font-weight:500;line-height:1.3;margin-bottom:5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ad-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ad-footer{display:flex;align-items:flex-end;justify-content:space-between;padding-top:8px;border-top:1px solid var(--cream)}
+.ad-price{font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:0.04em;color:var(--ink);line-height:1}
+.ad-price.free{color:var(--green)}
+.ad-meta{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);line-height:1.5}
+
+/* LIST VIEW */
+.listings-grid.list-view{grid-template-columns:1fr}
+.listings-grid.list-view .ad-card{display:grid;grid-template-columns:160px 1fr}
+.listings-grid.list-view .ad-image{height:100%;min-height:120px}
+.listings-grid.list-view .ad-body{display:flex;flex-direction:column;justify-content:space-between}
+
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;gap:4px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.page-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:#fff;font-family:"IBM Plex Mono",monospace;font-size:12px;cursor:pointer;transition:all 0.15s;color:var(--ink)}
+.page-btn:hover{border-color:var(--ink)}
+.page-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* MAP */
+#mapContainer{display:none;height:calc(100vh - 200px);min-height:500px;position:relative}
+#mapContainer.active{display:block}
+#map{height:100%;width:100%}
+.map-sidebar{position:absolute;top:16px;right:16px;z-index:500;width:280px;background:#fff;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:calc(100% - 32px);overflow-y:auto}
+.map-sidebar-header{background:var(--ink);color:#fff;padding:12px 14px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase}
+.map-listing-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+.map-listing-item:hover{background:var(--cream)}
+.map-listing-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.map-listing-price{font-family:"Bebas Neue",sans-serif;font-size:18px;color:var(--red)}
+.map-listing-loc{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.22s;padding:20px}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;width:100%;max-width:500px;transform:translateY(16px);transition:transform 0.22s;max-height:90vh;overflow-y:auto}
+.overlay.open .modal{transform:translateY(0)}
+.modal-hdr{background:var(--ink);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0}
+.modal-title{font-family:"Bebas Neue",sans-serif;font-size:24px;letter-spacing:0.05em}
+.modal-close{background:none;border:none;color:rgba(255,255,255,0.55);font-size:22px;cursor:pointer;line-height:1}
+.modal-close:hover{color:#fff}
+.modal-body{padding:24px}
+.form-row{margin-bottom:16px}
+.form-label{display:block;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 12px;border:1px solid var(--border);background:var(--card);font-family:"IBM Plex Sans",sans-serif;font-size:13px;color:var(--ink);outline:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--ink)}
+.form-textarea{min-height:80px;resize:vertical}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.form-submit{width:100%;padding:13px;background:var(--red);color:#fff;border:none;font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer}
+.form-submit:hover{background:#b5271f}
+.img-upload{border:2px dashed var(--border);padding:24px;text-align:center;cursor:pointer;background:var(--card);margin-bottom:16px}
+.img-upload-icon{font-size:24px;margin-bottom:4px}
+.img-upload-text{font-size:12px;color:var(--muted)}
+
+/* DETAIL MODAL */
+#detailModal .modal{max-width:760px;display:flex;flex-direction:column;overflow:hidden}
+.detail-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border)}
+.detail-cat{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.detail-body{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;flex:1;max-height:75vh}
+.detail-image-area{background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.18;min-height:280px;overflow:hidden}
+.detail-image-area img{width:100%;height:100%;object-fit:cover;opacity:1}
+.detail-info{padding:20px;display:flex;flex-direction:column;overflow-y:auto}
+.detail-title{font-family:"Bebas Neue",sans-serif;font-size:28px;letter-spacing:0.04em;line-height:1.1;margin-bottom:5px}
+.detail-price{font-family:"Bebas Neue",sans-serif;font-size:36px;color:var(--red);margin-bottom:14px;line-height:1}
+.detail-desc{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:16px;flex:1}
+.detail-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.detail-meta-key{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.detail-meta-val{font-size:13px;font-weight:500}
+.contact-btn{width:100%;padding:12px;background:var(--ink);color:#fff;border:none;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-bottom:8px}
+.contact-btn:hover{background:var(--red)}
+.view-profile-btn{width:100%;padding:10px;background:transparent;color:var(--ink);border:1px solid var(--border);font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-bottom:8px}
+.view-profile-btn:hover{background:var(--cream)}
+.seller-row{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border:1px solid var(--border)}
+.seller-avatar-sm{width:36px;height:36px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.seller-name{font-size:13px;font-weight:500}
+.seller-rating{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
+
+/* MESSAGING */
+#msgModal .modal{max-width:800px;display:flex;flex-direction:column;overflow:hidden}
+.msg-layout{display:grid;grid-template-columns:250px 1fr;height:520px;overflow:hidden}
+.msg-threads{border-right:1px solid var(--border);overflow-y:auto;background:var(--card)}
+.msg-threads-hdr{padding:12px 14px;border-bottom:1px solid var(--border);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)}
+.thread-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;position:relative}
+.thread-item:hover{background:var(--cream)}
+.thread-item.active{background:var(--ink);color:#fff}
+.thread-item.active .thread-time,.thread-item.active .thread-preview{color:rgba(255,255,255,0.5)}
+.thread-flex{display:flex;gap:9px;align-items:flex-start}
+.thread-avatar{width:34px;height:34px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.thread-item.active .thread-avatar{background:rgba(255,255,255,0.15)}
+.thread-row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.thread-name{font-size:13px;font-weight:500}
+.thread-time{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
+.thread-preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thread-unread{position:absolute;top:12px;right:12px;width:7px;height:7px;background:var(--red);border-radius:50%}
+.msg-main{display:flex;flex-direction:column;overflow:hidden}
+.msg-chat-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--card)}
+.msg-chat-avatar{width:34px;height:34px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:15px}
+.msg-chat-name{font-size:14px;font-weight:500}
+.msg-chat-item{font-size:11px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.msg-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.msg-bubble-wrap{display:flex;flex-direction:column;max-width:70%}
+.msg-bubble-wrap.me{align-self:flex-end;align-items:flex-end}
+.msg-bubble-wrap.them{align-self:flex-start}
+.msg-bubble{padding:9px 13px;font-size:13px;line-height:1.5}
+.msg-bubble.me{background:var(--ink);color:#fff}
+.msg-bubble.them{background:#fff;color:var(--ink);border:1px solid var(--border)}
+.msg-time{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--muted);margin-top:2px;padding:0 2px}
+.msg-date-divider{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);position:relative;margin:6px 0}
+.msg-date-divider::before{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border)}
+.msg-date-divider span{background:var(--paper);padding:0 10px;position:relative}
+.msg-item-ref{background:#fff;border:1px solid var(--border);border-left:3px solid var(--yellow);padding:9px 12px;margin-bottom:4px;font-size:12px;cursor:pointer}
+.msg-item-ref-title{font-weight:500}
+.msg-item-ref-price{font-family:"Bebas Neue",sans-serif;font-size:17px;color:var(--red)}
+.msg-input-row{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:7px;background:#fff}
+.msg-input{flex:1;padding:9px 12px;border:1px solid var(--border);background:var(--card);font-family:"IBM Plex Sans",sans-serif;font-size:13px;color:var(--ink);outline:none;resize:none}
+.msg-input:focus{border-color:var(--ink)}
+.msg-send-btn{padding:9px 18px;background:var(--ink);color:#fff;border:none;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;align-self:flex-end}
+.msg-send-btn:hover{background:var(--red)}
+.msg-actions{display:flex;gap:5px;align-self:flex-end}
+.msg-action-btn{padding:7px 10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer}
+.msg-action-btn:hover{border-color:var(--ink);color:var(--ink)}
+.no-thread-selected{display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:11px;flex-direction:column;gap:10px}
+
+/* PROFILE */
+#profileModal .modal{max-width:660px;display:flex;flex-direction:column;overflow:hidden}
+.profile-hero{background:var(--ink);padding:24px 24px 0}
+.profile-cover{height:70px;background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0,rgba(255,255,255,0.03) 1px,transparent 0,transparent 50%);background-size:10px 10px;margin:-24px -24px 0;border-bottom:3px solid var(--red)}
+.profile-avatar-wrap{margin-top:-18px;margin-bottom:10px}
+.profile-avatar{width:68px;height:68px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:30px;border:3px solid #fff}
+.profile-name{font-family:"Bebas Neue",sans-serif;font-size:30px;letter-spacing:0.04em;color:#fff;line-height:1}
+.profile-since{font-family:"IBM Plex Mono",monospace;font-size:10px;color:rgba(255,255,255,0.4);margin-top:3px;margin-bottom:14px}
+.profile-stats-row{display:flex;border-top:1px solid rgba(255,255,255,0.1);margin:0 -24px}
+.profile-stat{flex:1;padding:12px 16px;text-align:center;border-right:1px solid rgba(255,255,255,0.1)}
+.profile-stat:last-child{border-right:none}
+.profile-stat-num{font-family:"Bebas Neue",sans-serif;font-size:22px;color:#fff}
+.profile-stat-label{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4)}
+.profile-body{padding:20px 24px;overflow-y:auto;flex:1;max-height:50vh}
+.profile-section-title{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.profile-badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+.profile-badge{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;display:flex;align-items:center;gap:4px}
+.badge-verified{background:var(--green);color:#fff}
+.badge-trusted{background:var(--yellow);color:var(--ink)}
+.badge-seller{background:var(--blue);color:#fff}
+.profile-listings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.profile-listing-thumb{background:var(--cream);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;opacity:0.6;cursor:pointer;transition:opacity 0.15s;position:relative;overflow:hidden}
+.profile-listing-thumb:hover{opacity:1}
+.profile-listing-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:1}
+.profile-listing-price{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-family:"Bebas Neue",sans-serif;font-size:15px;background:rgba(0,0,0,0.6);color:#fff;padding:2px 0;z-index:1}
+.reviews-list{display:flex;flex-direction:column;gap:12px}
+.review-item{padding:12px;background:var(--card);border:1px solid var(--border)}
+.review-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.review-stars{font-size:12px}
+.review-date{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
+.review-author{font-size:12px;font-weight:500;margin-bottom:3px}
+.review-text{font-size:12px;color:var(--muted);line-height:1.6}
+.profile-msg-btn{width:100%;padding:13px;background:var(--ink);color:#fff;border:none;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-top:4px}
+.profile-msg-btn:hover{background:var(--red)}
+
+/* AUTH */
+#authModal .modal{max-width:400px}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border)}
+.auth-tab{flex:1;padding:12px;background:none;border:none;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all 0.15s}
+.auth-tab.active{color:var(--red);border-bottom:2px solid var(--red)}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(50px);background:var(--ink);color:#fff;padding:10px 22px;font-size:12px;z-index:400;opacity:0;transition:all 0.25s;font-family:"IBM Plex Mono",monospace;letter-spacing:0.05em;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* FOOTER */
+footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;border-top:4px solid var(--red)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-bottom:32px}
+.footer-col h4{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:12px}
+.footer-col ul{list-style:none}
+.footer-col ul li{margin-bottom:8px}
+.footer-col ul li a{font-size:12px;color:rgba(255,255,255,0.55);text-decoration:none}
+.footer-col ul li a:hover{color:#fff}
+.footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);font-family:"IBM Plex Mono",monospace;font-size:10px}
+.footer-logo{font-family:"Bebas Neue",sans-serif;font-size:24px;letter-spacing:0.05em;color:#fff}
+.footer-logo span{color:var(--yellow)}
+.leaflet-popup-content-wrapper{border-radius:0!important}
+.popup-title{font-size:13px;font-weight:500;margin-bottom:3px}
+.popup-price{font-family:"Bebas Neue",sans-serif;font-size:20px;color:var(--red);margin-bottom:5px}
+.popup-btn{display:block;width:100%;padding:7px;background:var(--ink);color:#fff;border:none;font-size:11px;letter-spacing:0.07em;text-transform:uppercase;cursor:pointer;text-align:center;margin-top:6px}
+.popup-btn:hover{background:var(--red)}
+
+@media(max-width:900px){
+  header{padding:0 14px}
+  .hero{padding:28px 14px}
+  .hero-headline{font-size:48px}
+  .search-select{display:none}
+  .main{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .listings-panel{padding:14px}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .detail-body{grid-template-columns:1fr}
+  .msg-layout{grid-template-columns:1fr;height:auto}
+  .msg-threads{height:180px}
+  .profile-listings-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <span id="liveDate"></span><span style="color:var(--yellow);font-weight:bold;margin-left:12px">v3.0-FIXED</span>
+    <span>Nationwide &middot; <strong style="color:rgba(255,255,255,0.65)">0 active listings</strong></span>
+  </div>
+  <div class="header-main">
+    <div>
+      <a href="#" class="logo">Class<span>ifieds</span></a>
+      <div class="header-tagline">Buy &middot; Sell &middot; Trade &middot; Local</div>
+    </div>
+    <div class="header-actions">
+      <button class="nav-icon-btn" onclick="openMessages()" title="Messages">
+        &#x1F4AC;
+        <span class="nav-badge" id="msgBadge">3</span>
+      </button>
+      <button class="nav-icon-btn" onclick="openMyProfile()" title="My Profile">&#x1F464;</button>
+      <a href="#" class="btn-ghost" onclick="openAuth(event)">Sign In</a>
+      <button class="btn-post" onclick="openPostModal()">+ Post Ad Free</button>
+    </div>
+  </div>
+</header>
+
+<div class="cat-bar" id="catBar">
+  <button class="cat-item active" onclick="filterCat('All')">All</button>
+  <button class="cat-item" onclick="filterCat('Electronics')">&#x1F4F1; Electronics</button>
+  <button class="cat-item" onclick="filterCat('Vehicles')">&#x1F697; Vehicles</button>
+  <button class="cat-item" onclick="filterCat('Furniture')">&#x1F6CB; Furniture</button>
+  <button class="cat-item" onclick="filterCat('Clothing')">&#x1F457; Clothing</button>
+  <button class="cat-item" onclick="filterCat('Garden')">&#x1F33F; Garden</button>
+  <button class="cat-item" onclick="filterCat('Sports')">&#x26BD; Sports</button>
+  <button class="cat-item" onclick="filterCat('Tools')">&#x1F527; Tools</button>
+  <button class="cat-item" onclick="filterCat('Books')">&#x1F4DA; Books</button>
+  <button class="cat-item" onclick="filterCat('Free')">&#x1F381; Free</button>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Live Marketplace</div>
+  <h1 class="hero-headline">Find <em>anything.</em><br>Sell <em>fast.</em></h1>
+  <div class="search-row">
+    <input class="search-input" id="searchInput" placeholder="What are you looking for?" type="text" onkeyup="handleSearch(event)"/>
+    <select class="search-select" id="locationSelect">
+      <option>All Locations</option>
+      <option>New York</option><option>Los Angeles</option>
+      <option>Chicago</option><option>Houston</option><option>Phoenix</option>
+    </select>
+    <button class="search-btn" onclick="doSearch()">Search &rarr;</button>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><strong>0</strong>Active Listings</div>
+    <div class="stat"><strong>0</strong>Added Today</div>
+    <div class="stat"><strong>0</strong>Total Members</div>
+  </div>
+</div>
+
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-listings" onclick="switchMainView('listings')">&#x229E; Listings</button>
+  <button class="view-tab" id="tab-map" onclick="switchMainView('map')">Map View</button>
+</div>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Filter Results</div>
+      <div class="filter-group">
+        <label class="filter-label">Price Range</label>
+        <input class="price-input" id="priceMin" placeholder="$ Min" type="number"/>
+        <input class="price-input" id="priceMax" placeholder="$ Max" type="number"/>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Condition</label>
+        <div class="checkbox-list">
+          <label class="checkbox-item"><input type="checkbox" checked/><span>New</span><span class="count">124</span></label>
+          <label class="checkbox-item"><input type="checkbox" checked/><span>Like New</span><span class="count">389</span></label>
+          <label class="checkbox-item"><input type="checkbox" checked/><span>Good</span><span class="count">612</span></label>
+          <label class="checkbox-item"><input type="checkbox" checked/><span>Fair</span><span class="count">207</span></label>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Listing Type</label>
+        <div class="checkbox-list">
+          <label class="checkbox-item"><input type="checkbox" checked/><span>For Sale</span><span class="count">2891</span></label>
+          <label class="checkbox-item"><input type="checkbox" checked/><span>Trade / Swap</span><span class="count">341</span></label>
+          <label class="checkbox-item"><input type="checkbox" checked/><span>Free</span><span class="count">180</span></label>
+        </div>
+      </div>
+      <button class="apply-filters" onclick="showToast('Filters applied')">Apply Filters</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Top Categories</div>
+      <div class="checkbox-list">
+        <label class="checkbox-item" style="cursor:pointer" onclick="filterCat('Electronics')"><span>Electronics</span><span class="count">512</span></label>
+        <label class="checkbox-item" style="cursor:pointer" onclick="filterCat('Vehicles')"><span>Vehicles</span><span class="count">388</span></label>
+        <label class="checkbox-item" style="cursor:pointer" onclick="filterCat('Furniture')"><span>Furniture</span><span class="count">275</span></label>
+        <label class="checkbox-item" style="cursor:pointer" onclick="filterCat('Clothing')"><span>Clothing</span><span class="count">621</span></label>
+        <label class="checkbox-item" style="cursor:pointer" onclick="filterCat('Tools')"><span>Tools</span><span class="count">198</span></label>
+      </div>
+    </div>
+  </aside>
+
+  <div id="listingsPanel" class="listings-panel">
+    <div class="listings-header">
+      <div class="listings-count"><strong id="resultCount">0</strong> listings found</div>
+      <div class="sort-row">
+        <span class="sort-label">Sort:</span>
+        <select class="sort-select" onchange="sortListings(this.value)">
+          <option value="newest">Newest First</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+        </select>
+        <div class="view-toggle">
+          <button class="toggle-btn active" id="gridBtn" onclick="setView('grid')">&#x229E;</button>
+          <button class="toggle-btn" id="listBtn" onclick="setView('list')">&#x2630;</button>
+        </div>
+      </div>
+    </div>
+    <div class="listings-grid" id="listingsGrid">
+  <div class="ad-card" style="border:2px solid orange;padding:20px;background:white;grid-column:1/-1;text-align:center">
+    <strong style="font-size:18px">⚡ Loading listings...</strong><br>
+    <span style="color:#7a7168;font-size:12px">If you see this, JavaScript may be disabled</span>
+  </div>
+</div>
+    <div class="pagination">
+      <button class="page-btn">&lsaquo;</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn" onclick="showToast('Page 2')">2</button>
+      <button class="page-btn" onclick="showToast('Page 3')">3</button>
+      <span style="padding:0 6px;line-height:36px;color:var(--muted);font-size:12px">&hellip;</span>
+      <button class="page-btn">12</button>
+      <button class="page-btn">&rsaquo;</button>
+    </div>
+  </div>
+
+  <div id="mapContainer">
+    <div id="map"></div>
+    <div class="map-sidebar">
+      <div class="map-sidebar-header">Listings Near You</div>
+      <div id="mapListingsList"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="footer-logo">Class<span>ifieds</span></div>
+      <p style="font-size:11px;margin-top:8px;line-height:1.7">The fastest way to buy and sell locally. Free to list, easy to use.</p>
+    </div>
+    <div class="footer-col"><h4>Selling</h4><ul><li><a href="#">Post Free Ad</a></li><li><a href="#">Seller Tips</a></li><li><a href="#">Pricing</a></li><li><a href="#">Safety</a></li></ul></div>
+    <div class="footer-col"><h4>Buying</h4><ul><li><a href="#">Browse All</a></li><li><a href="#">Saved Searches</a></li><li><a href="#">Buyer Protection</a></li><li><a href="#">Scam Alerts</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Contact</a></li><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Classifieds. All rights reserved.</span>
+    <span>Free &middot; Fast &middot; Trusted</span>
+  </div>
+</footer>
+
+<!-- POST MODAL -->
+<div class="overlay" id="postModal" onclick="closeOnOverlay(event,'postModal')">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">Post Your Ad</span><button class="modal-close" onclick="close_('postModal')">&#x00D7;</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label class="form-label">Ad Title *</label><input class="form-input" id="newTitle" placeholder="e.g. iPhone 14 Pro, barely used"/></div>
+      <div class="form-row-2">
+        <div><label class="form-label">Category *</label><select class="form-select" id="newCat"><option value="">Select</option><option>Electronics</option><option>Vehicles</option><option>Furniture</option><option>Clothing</option><option>Garden</option><option>Sports</option><option>Tools</option><option>Books</option><option>Free</option><option>Other</option></select></div>
+        <div><label class="form-label">Condition *</label><select class="form-select" id="newCondition"><option>New</option><option>Like New</option><option>Good</option><option>Fair</option></select></div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Price ($)</label><input class="form-input" id="newPrice" type="number" placeholder="0 = Free"/></div>
+        <div><label class="form-label">Location</label><input class="form-input" id="newLocation" placeholder="City, State"/></div>
+      </div>
+      <div class="form-row"><label class="form-label">Description *</label><textarea class="form-textarea" id="newDesc" placeholder="Describe your item..."></textarea></div>
+      <div class="img-upload" onclick="showToast('Image upload coming soon')"><div class="img-upload-icon">&#x1F4F7;</div><div class="img-upload-text">Click to upload photos (up to 8)</div></div>
+      <div class="form-row"><label class="form-label">Your Email *</label><input class="form-input" id="newEmail" type="email" placeholder="Buyers contact you here"/></div>
+      <button class="form-submit" onclick="submitAd()">Publish Ad Free &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailModal" onclick="closeOnOverlay(event,'detailModal')">
+  <div class="modal" style="max-width:760px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="detail-header">
+      <span class="detail-cat" id="detailCat"></span>
+      <button class="modal-close" style="color:var(--muted)" onclick="close_('detailModal')">&#x00D7;</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-image-area" id="detailImgArea"></div>
+      <div class="detail-info">
+        <div class="detail-title" id="detailTitle"></div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-desc" id="detailDesc"></div>
+        <div class="detail-meta-grid" id="detailMeta"></div>
+        <button class="contact-btn" id="detailContactBtn">Message Seller</button>
+        <button class="view-profile-btn" id="detailProfileBtn">View Seller Profile</button>
+        <div class="seller-row">
+          <div class="seller-avatar-sm" id="detailAvatar"></div>
+          <div><div class="seller-name" id="detailSeller"></div><div class="seller-rating" id="detailRating"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGING MODAL -->
+<div class="overlay" id="msgModal" onclick="closeOnOverlay(event,'msgModal')">
+  <div class="modal" style="max-width:800px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-hdr"><span class="modal-title">Messages</span><button class="modal-close" onclick="close_('msgModal')">&#x00D7;</button></div>
+    <div class="msg-layout">
+      <div class="msg-threads"><div class="msg-threads-hdr">Conversations</div><div id="threadList"></div></div>
+      <div class="msg-main" id="msgMain"><div class="no-thread-selected"><span style="font-size:32px;opacity:0.3">&#x1F4AC;</span><span>Select a conversation</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="overlay" id="profileModal" onclick="closeOnOverlay(event,'profileModal')">
+  <div class="modal" style="max-width:660px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="detail-header" style="padding:10px 20px">
+      <span style="font-family:IBM Plex Mono,monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)">User Profile</span>
+      <button class="modal-close" style="color:var(--muted)" onclick="close_('profileModal')">&#x00D7;</button>
+    </div>
+    <div class="profile-hero">
+      <div class="profile-cover"></div>
+      <div class="profile-avatar-wrap"><div class="profile-avatar" id="profileAvatar">&#x1F464;</div></div>
+      <div class="profile-name" id="profileName">-</div>
+      <div class="profile-since" id="profileSince">Member since -</div>
+      <div class="profile-stats-row">
+        <div class="profile-stat"><div class="profile-stat-num" id="pSales">0</div><div class="profile-stat-label">Sales</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="pListings">0</div><div class="profile-stat-label">Listings</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="pRating">-</div><div class="profile-stat-label">Rating</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="pResponse">-</div><div class="profile-stat-label">Response</div></div>
+      </div>
+    </div>
+    <div class="profile-body">
+      <div class="profile-section-title">Verified Badges</div>
+      <div class="profile-badges" id="profileBadges"></div>
+      <div class="profile-section-title">Active Listings</div>
+      <div class="profile-listings-grid" id="profileListings"></div>
+      <div class="profile-section-title">Reviews</div>
+      <div class="reviews-list" id="profileReviews"></div>
+      <button class="profile-msg-btn" id="profileMsgBtn">Send Message</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="overlay" id="authModal" onclick="closeOnOverlay(event,'authModal')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hdr"><span class="modal-title">Welcome Back</span><button class="modal-close" onclick="close_('authModal')">&#x00D7;</button></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuth(this,'signIn')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuth(this,'register')">Register</button>
+    </div>
+    <div class="modal-body">
+      <div id="signInForm">
+        <div class="form-row"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="you@email.com"/></div>
+        <div class="form-row"><label class="form-label">Password</label><input class="form-input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/></div>
+        <button class="form-submit" onclick="doSignIn()">Sign In &rarr;</button>
+      </div>
+      <div id="registerForm" style="display:none">
+        <div class="form-row-2">
+          <div><label class="form-label">First Name</label><input class="form-input" placeholder="Alex"/></div>
+          <div><label class="form-label">Last Name</label><input class="form-input" placeholder="Smith"/></div>
+        </div>
+        <div class="form-row"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="you@email.com"/></div>
+        <div class="form-row"><label class="form-label">Password</label><input class="form-input" type="password" placeholder="Min 8 characters"/></div>
+        <div class="form-row"><label class="form-label">City</label><input class="form-input" placeholder="New York, NY"/></div>
+        <button class="form-submit" onclick="doRegister()">Create Account &rarr;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+const allListings = [
+  {id:1,title:'iPhone 14 Pro 256GB',cat:'Electronics',price:699,condition:'Like New',location:'New York, NY',lat:40.7128,lng:-74.006,desc:'Space Black, no scratches. Comes with original box, cable, and case. Battery health 94%.',sellerId:1,badge:'hot',posted:'2h ago',img:'https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=600&q=80'},
+  {id:2,title:'IKEA KALLAX Shelf Unit',cat:'Furniture',price:45,condition:'Good',location:'Brooklyn, NY',lat:40.6782,lng:-73.9442,desc:'4x4 cube shelving unit in white. Minor scuffs on bottom edge. Buyer must collect.',sellerId:2,badge:null,posted:'5h ago',img:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80'},
+  {id:3,title:'Trek FX 3 Disc 2023',cat:'Sports',price:780,condition:'Like New',location:'Chicago, IL',lat:41.8781,lng:-87.6298,desc:'Barely ridden, only 40 miles. Includes lights, lock, and rear rack. Size medium.',sellerId:3,badge:'new',posted:'1h ago',img:'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=600&q=80'},
+  {id:4,title:'MacBook Pro M2 14in',cat:'Electronics',price:1499,condition:'Good',location:'Los Angeles, CA',lat:34.0522,lng:-118.2437,desc:'8GB RAM, 512GB SSD. Some light wear on lid. Fully functional, includes charger.',sellerId:4,badge:'hot',posted:'3h ago',img:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&q=80'},
+  {id:5,title:'Free Moving Boxes (20+)',cat:'Free',price:0,condition:'Good',location:'Austin, TX',lat:30.2672,lng:-97.7431,desc:'Leftover from moving. Various sizes, most in decent condition. First come first served.',sellerId:5,badge:'sale',posted:'30m ago',img:'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&q=80'},
+  {id:6,title:'Vintage Leather Jacket M',cat:'Clothing',price:120,condition:'Good',location:'Seattle, WA',lat:47.6062,lng:-122.3321,desc:'Brown genuine leather, size medium. 1990s vintage find. Some natural patina.',sellerId:6,badge:null,posted:'6h ago',img:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80'},
+  {id:7,title:'DeWalt 20V Drill Set',cat:'Tools',price:95,condition:'Good',location:'Houston, TX',lat:29.7604,lng:-95.3698,desc:'Drill + circular saw combo. Two batteries included. Light use, well maintained.',sellerId:7,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&q=80'},
+  {id:8,title:'Sony WH-1000XM5',cat:'Electronics',price:210,condition:'Like New',location:'Denver, CO',lat:39.7392,lng:-104.9903,desc:'Purchased 6 months ago. Includes case and cables. Noise cancelling works perfectly.',sellerId:8,badge:'new',posted:'4h ago',img:'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&q=80'},
+  {id:9,title:'2018 Honda Civic EX',cat:'Vehicles',price:14500,condition:'Good',location:'Phoenix, AZ',lat:33.4484,lng:-112.074,desc:'78k miles. Clean title, no accidents. Recent oil change and new tires. Blue exterior.',sellerId:9,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&q=80'},
+  {id:10,title:'Garden Tool Set (8 pcs)',cat:'Garden',price:30,condition:'Good',location:'Portland, OR',lat:45.5051,lng:-122.675,desc:'Full set including trowel, rake, shears, and more. Stored in shed, minor rust.',sellerId:2,badge:null,posted:'2d ago',img:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80'},
+  {id:11,title:'Harry Potter Complete Set',cat:'Books',price:22,condition:'Good',location:'Boston, MA',lat:42.3601,lng:-71.0589,desc:'All 7 hardcover books. Some wear on spines but all readable. Great set for a fan.',sellerId:3,badge:null,posted:'3h ago',img:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80'},
+  {id:12,title:'Nintendo Switch OLED',cat:'Electronics',price:280,condition:'Like New',location:'San Jose, CA',lat:37.3382,lng:-121.8863,desc:'White edition with dock and both Joy-Cons. Comes with 4 games. Screen is perfect.',sellerId:4,badge:'hot',posted:'1h ago',img:'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=600&q=80'},
+  {id:13,title:'Standing Desk 60in Electric',cat:'Furniture',price:220,condition:'Like New',location:'Austin, TX',lat:30.2975,lng:-97.7328,desc:'Flexispot E7 frame, bamboo top. Height memory presets. Works perfectly, moving out.',sellerId:5,badge:'new',posted:'8h ago',img:'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&q=80'},
+  {id:14,title:'Road Bike Cannondale',cat:'Sports',price:950,condition:'Good',location:'Minneapolis, MN',lat:44.9778,lng:-93.265,desc:'CAAD12 Ultegra. Size 54cm. Tuned last month. Ideal for experienced riders.',sellerId:6,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=600&q=80'},
+  {id:15,title:'Levis 501 Bundle (4 pairs)',cat:'Clothing',price:80,condition:'Good',location:'Nashville, TN',lat:36.1627,lng:-86.7816,desc:'Sizes 32x32 and 34x30. All worn gently. Mix of blue and black washes.',sellerId:7,badge:'sale',posted:'5h ago',img:'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80'},
+  {id:16,title:'Free Firewood — Self Collect',cat:'Free',price:0,condition:'Fair',location:'Richmond, VA',lat:37.5407,lng:-77.436,desc:'Approx half cord of mixed hardwood. Split and dried. Bring your truck.',sellerId:8,badge:'sale',posted:'Today',img:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80'},
+  {id:17,title:'Samsung 65in QLED 4K TV',cat:'Electronics',price:520,condition:'Like New',location:'Atlanta, GA',lat:33.749,lng:-84.388,desc:'Samsung Q80B, 2022 model. Stunning picture quality, all cables included. No dead pixels.',sellerId:3,badge:'hot',posted:'2h ago',img:'https://images.unsplash.com/photo-1593359677879-a4bb92f4834b?w=600&q=80'},
+  {id:18,title:'Peloton Bike+',cat:'Sports',price:1200,condition:'Good',location:'San Francisco, CA',lat:37.7749,lng:-122.4194,desc:'Includes weights, mat, and shoes size 10. Subscription not included. Works perfectly.',sellerId:4,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80'},
+  {id:19,title:'Dining Table + 6 Chairs',cat:'Furniture',price:340,condition:'Good',location:'Dallas, TX',lat:32.7767,lng:-96.797,desc:'Solid wood farmhouse table, 72in. Chairs have minor wear on seat cushions. Very sturdy.',sellerId:5,badge:null,posted:'3h ago',img:'https://images.unsplash.com/photo-1615066688168-b32b66d12f54?w=600&q=80'},
+  {id:20,title:'Canon EOS R6 Body',cat:'Electronics',price:1650,condition:'Like New',location:'Miami, FL',lat:25.7617,lng:-80.1918,desc:'Only 4,200 shutter actuations. Comes with original box, two batteries, and charger.',sellerId:1,badge:'new',posted:'1h ago',img:'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&q=80'},
+  {id:21,title:'Air Jordan 1 Retro OG sz11',cat:'Clothing',price:210,condition:'New',location:'Chicago, IL',lat:41.8827,lng:-87.6233,desc:'Brand new in box, never worn. Chicago colorway. Bought as investment, need space.',sellerId:6,badge:'new',posted:'4h ago',img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80'},
+  {id:22,title:'Weber Spirit E-310 Grill',cat:'Garden',price:180,condition:'Good',location:'Charlotte, NC',lat:35.2271,lng:-80.8431,desc:'3-burner propane grill. Cleaned and ready for summer. Comes with half-full propane tank.',sellerId:7,badge:null,posted:'5h ago',img:'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80'},
+  {id:23,title:'PlayStation 5 Disc Edition',cat:'Electronics',price:399,condition:'Like New',location:'Las Vegas, NV',lat:36.1699,lng:-115.1398,desc:'Barely used, comes with two controllers and 3 games. All original packaging included.',sellerId:2,badge:'hot',posted:'30m ago',img:'https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=600&q=80'},
+  {id:24,title:'Craftsman Tool Chest 26in',cat:'Tools',price:145,condition:'Good',location:'Columbus, OH',lat:39.9612,lng:-82.9988,desc:'7-drawer rolling chest, all drawers smooth. Some surface scratches but fully functional.',sellerId:9,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=600&q=80'},
+  {id:25,title:'Mid-Century Accent Chair',cat:'Furniture',price:95,condition:'Good',location:'Portland, OR',lat:45.512,lng:-122.658,desc:'Walnut legs, mustard yellow fabric. Light wear on armrests. Pickup only.',sellerId:3,badge:null,posted:'6h ago',img:'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=600&q=80'},
+  {id:26,title:'Free Baby Clothes 0–12mo',cat:'Free',price:0,condition:'Good',location:'Sacramento, CA',lat:38.5816,lng:-121.4944,desc:'3 large bags of gently used baby clothes, mixed brands. Washed and ready to go.',sellerId:5,badge:'sale',posted:'Today',img:'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600&q=80'},
+  {id:27,title:'Kindle Paperwhite 11th Gen',cat:'Electronics',price:85,condition:'Like New',location:'Baltimore, MD',lat:39.2904,lng:-76.6122,desc:'Waterproof, 32GB, with backlight. Includes original charging cable and case.',sellerId:8,badge:null,posted:'8h ago',img:'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80'},
+  {id:28,title:'Road Cycling Shoes Sz 43',cat:'Sports',price:60,condition:'Good',location:'Boulder, CO',lat:40.015,lng:-105.2705,desc:'Shimano RC3 SPD-SL. Used one season. Cleats included. Great entry-level shoe.',sellerId:6,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80'},
+  {id:29,title:'Vintage Levis Trucker Jacket',cat:'Clothing',price:75,condition:'Good',location:'Nashville, TN',lat:36.175,lng:-86.788,desc:'Size L, classic wash. Authentic 1980s tag. Minor fading adds to the character.',sellerId:7,badge:null,posted:'2d ago',img:'https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?w=600&q=80'},
+  {id:30,title:'2020 Toyota Camry SE',cat:'Vehicles',price:22500,condition:'Like New',location:'Orlando, FL',lat:28.5383,lng:-81.3792,desc:'32k miles, one owner, no accidents. Moonroof, Apple CarPlay, heated seats. Must see.',sellerId:1,badge:'new',posted:'3h ago',img:'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600&q=80'},
+  {id:31,title:'KitchenAid Stand Mixer',cat:'Furniture',price:175,condition:'Good',location:'Pittsburgh, PA',lat:40.4406,lng:-79.9959,desc:'5-quart tilt-head in Empire Red. All attachments included. Works perfectly.',sellerId:2,badge:null,posted:'4h ago',img:'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80'},
+  {id:32,title:'Acoustic Guitar — Yamaha FG800',cat:'Sports',price:110,condition:'Good',location:'Tucson, AZ',lat:32.2226,lng:-110.9747,desc:'Great beginner/intermediate guitar. Has been restrung recently. Includes soft case.',sellerId:4,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80'},
+];
+
+const sellers = {
+  1:{name:'Mike T.',emoji:'😎',since:'Jan 2022',sales:23,listings:5,rating:'4.9',response:'< 1hr',badges:['verified','trusted'],bio:'Electronics enthusiast. Fast shipper, honest descriptions.',reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'},{stars:5,author:'Kate B.',date:'Jan 2026',text:'Great seller, very communicative throughout the process.'}]},
+  2:{name:'Sarah K.',emoji:'🌸',since:'Mar 2021',sales:11,listings:3,rating:'4.7',response:'~2hrs',badges:['verified'],bio:'Moving out and decluttering. Everything must go!',reviews:[{stars:5,author:'Dana L.',date:'Feb 2026',text:'Lovely seller. Item was clean and ready for pickup.'},{stars:4,author:'Bob W.',date:'Dec 2025',text:'Good condition as described, smooth transaction.'}]},
+  3:{name:'Jordan R.',emoji:'🚴',since:'Jun 2023',sales:4,listings:2,rating:'5.0',response:'< 30min',badges:['verified','trusted','seller'],bio:'Sports & outdoor gear. All items well maintained.',reviews:[{stars:5,author:'Mike T.',date:'Mar 2026',text:'Incredible deal on the bike. Condition was even better than listed!'}]},
+  4:{name:'Alex P.',emoji:'💻',since:'Nov 2020',sales:17,listings:4,rating:'4.8',response:'~1hr',badges:['verified','trusted','seller'],bio:'Tech professional. Selling gently used Apple and Sony gear.',reviews:[{stars:5,author:'Priya N.',date:'Feb 2026',text:'Alex was extremely helpful and the MacBook works perfectly.'},{stars:4,author:'Ryan H.',date:'Jan 2026',text:'Fast, reliable seller. Packaged item really well.'}]},
+  5:{name:'Dana L.',emoji:'📦',since:'Aug 2022',sales:8,listings:3,rating:'4.6',response:'~3hrs',badges:['verified'],bio:'Just moved to a new city — giving away what I can\'t take!',reviews:[{stars:5,author:'Emma S.',date:'Feb 2026',text:'Dana was so generous. Boxes were in great shape.'}]},
+  6:{name:'Chris M.',emoji:'🧥',since:'Jan 2019',sales:31,listings:6,rating:'4.9',response:'< 1hr',badges:['verified','trusted','seller'],bio:'Vintage clothing collector. Over 5 years of trusted selling.',reviews:[{stars:5,author:'Tess V.',date:'Mar 2026',text:'The jacket is absolutely beautiful. Chris is a true professional.'},{stars:5,author:'Owen F.',date:'Feb 2026',text:'Responsive and fair. A pleasure to buy from.'}]},
+  7:{name:'Bob W.',emoji:'🔧',since:'May 2021',sales:6,listings:2,rating:'4.5',response:'~4hrs',badges:['verified'],bio:'Handyman selling off extra tools. All functional, used with care.',reviews:[{stars:4,author:'Luis G.',date:'Jan 2026',text:'Tools work great. Bob was a bit slow to respond but all good.'}]},
+  8:{name:'Priya N.',emoji:'🎧',since:'Sep 2022',sales:9,listings:4,rating:'5.0',response:'< 45min',badges:['verified','trusted'],bio:'Audio enthusiast. Everything I sell has been personally tested.',reviews:[{stars:5,author:'Alex P.',date:'Feb 2026',text:'Perfect condition headphones, Priya was fantastic to deal with.'},{stars:5,author:'Finn J.',date:'Jan 2026',text:'Exactly as described. One of the best sellers I\'ve met here.'}]},
+  9:{name:'Luis G.',emoji:'🚗',since:'Apr 2020',sales:2,listings:1,rating:'4.8',response:'~2hrs',badges:['verified'],bio:'Selling my old car to upgrade. Honest seller, come inspect it.',reviews:[{stars:5,author:'Chris M.',date:'Mar 2026',text:'Car was exactly as described, clean and runs great.'}]},
+};
+
+const conversations = [
+  {id:1,sellerId:1,listingId:1,unread:2,messages:[
+    {from:'them',text:"Hi! Is the iPhone still available?",time:'10:23 AM'},
+    {from:'me',text:"Yes it is! Just listed it this morning.",time:'10:25 AM'},
+    {from:'them',text:"Great — would you take $650 for it?",time:'10:28 AM'},
+    {from:'them',text:"I can pick up today if so 🙏",time:'10:29 AM'},
+  ]},
+  {id:2,sellerId:4,listingId:4,unread:1,messages:[
+    {from:'me',text:"Hey, is the MacBook available for viewing?",time:'Yesterday'},
+    {from:'them',text:"Absolutely, swing by anytime after 5pm.",time:'Yesterday'},
+    {from:'them',text:"Here's my address: 123 Oak St, LA",time:'Yesterday'},
+  ]},
+  {id:3,sellerId:6,listingId:6,unread:0,messages:[
+    {from:'me',text:"Love the jacket! What's the actual chest measurement?",time:'Mon'},
+    {from:'them',text:"It's about 42in chest, fits true to size.",time:'Mon'},
+    {from:'me',text:"Perfect, I'll take it. When can we meet?",time:'Mon'},
+    {from:'them',text:"Tomorrow noon works great — downtown coffee shop?",time:'Mon'},
+  ]},
+];
+
+var catEmojis = {Electronics:"📱",Vehicles:"🚗",Furniture:"🛋️",Clothing:"👗",Garden:"🌿",Sports:"⚽",Tools:"🔧",Books:"📚",Free:"🎁",Other:"📦"};
+var currentCat = "All";
+var activeListings = allListings.slice();
+var activeThread = null;
+var map = null;
+var markers = [];
+
+document.getElementById("liveDate").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+
+function getEmoji(l){ return catEmojis[l.cat] || "📦"; }
+
+function renderListings(data) {
+  var grid = document.getElementById("listingsGrid");
+  document.getElementById("resultCount").textContent = data.length;
+  if (!data.length) {
+    grid.innerHTML = "<p style='padding:40px;text-align:center;color:#7a7168'>No listings found.</p>";
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < data.length; i++) {
+    var l = data[i];
+    var price = l.price === 0 ? "FREE" : "$" + l.price.toLocaleString();
+    var city = l.location.split(",")[0];
+    var catColors = {'Electronics':'#1a1a2e','Vehicles':'#1a0a00','Furniture':'#2a1f00','Clothing':'#1a0020','Garden':'#001a05','Sports':'#001a1a','Tools':'#1a0a00','Books':'#00101a','Free':'#0a1a00'};
+    var bg = catColors[l.cat] || '#1a1a1a';
+    var imgHtml = "<div style='width:100%;height:100%;background:" + bg + ";display:flex;align-items:center;justify-content:center;font-size:52px'>" + getEmoji(l) + "</div>";
+    var badge = "";
+    if (l.badge === "hot") badge = "<div class='ad-badge badge-hot'>Hot</div>";
+    else if (l.badge === "new") badge = "<div class='ad-badge badge-new'>New</div>";
+    else if (l.badge === "sale") badge = "<div class='ad-badge badge-sale'>Sale</div>";
+    var priceClass = l.price === 0 ? "ad-price free" : "ad-price";
+    html += "<div class='ad-card' onclick='openDetail(" + l.id + ")'>";
+    html += "<div class='ad-image'>" + imgHtml + badge + "<button class='ad-fav' onclick='toggleFav(event,this)'>&#9825;</button></div>";
+    html += "<div class='ad-body'>";
+    html += "<div class='ad-category'>" + l.cat + "</div>";
+    html += "<div class='ad-title'>" + l.title + "</div>";
+    html += "<div class='ad-desc'>" + l.desc + "</div>";
+    html += "<div class='ad-footer'><div class='" + priceClass + "'>" + price + "</div><div class='ad-meta'>" + city + "<br>" + l.posted + "</div></div>";
+    html += "</div></div>";
+  }
+  grid.innerHTML = html;
+}
+
+function filterCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll(".cat-item").forEach(function(b) {
+    b.classList.toggle("active", b.textContent.trim() === cat || (cat === "All" && b.textContent.trim() === "All"));
+  });
+  activeListings = cat === "All" ? allListings.slice() : allListings.filter(function(l){ return l.cat === cat; });
+  renderListings(activeListings);
+  if (map) { renderMapMarkers(activeListings); renderMapList(activeListings); }
+}
+
+function doSearch() {
+  var q = document.getElementById("searchInput").value.toLowerCase();
+  activeListings = allListings.filter(function(l) {
+    return (currentCat === "All" || l.cat === currentCat) && (l.title.toLowerCase().indexOf(q) > -1 || l.desc.toLowerCase().indexOf(q) > -1);
+  });
+  renderListings(activeListings);
+}
+function handleSearch(e) { if (e.key === "Enter") doSearch(); }
+
+function sortListings(val) {
+  var base = activeListings.slice();
+  if (val === "price_asc") base.sort(function(a,b){ return a.price - b.price; });
+  else if (val === "price_desc") base.sort(function(a,b){ return b.price - a.price; });
+  renderListings(base);
+}
+
+function setView(v) {
+  document.getElementById("listingsGrid").classList.toggle("list-view", v === "list");
+  document.getElementById("gridBtn").classList.toggle("active", v === "grid");
+  document.getElementById("listBtn").classList.toggle("active", v === "list");
+}
+
+function toggleFav(e, btn) {
+  e.stopPropagation();
+  btn.classList.toggle("faved");
+  btn.textContent = btn.classList.contains("faved") ? "♥" : "♡";
+  showToast(btn.classList.contains("faved") ? "Saved to favorites" : "Removed from favorites");
+}
+
+function switchMainView(v) {
+  var isMap = v === "map";
+  document.getElementById("listingsPanel").style.display = isMap ? "none" : "block";
+  document.getElementById("mapContainer").classList.toggle("active", isMap);
+  document.getElementById("tab-listings").classList.toggle("active", !isMap);
+  document.getElementById("tab-map").classList.toggle("active", isMap);
+  if (isMap && !map) initMap();
+}
+
+function initMap() {
+  map = L.map("map").setView([39.5, -98.35], 4);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {attribution:"© OpenStreetMap contributors",maxZoom:18}).addTo(map);
+  renderMapMarkers(activeListings);
+  renderMapList(activeListings);
+}
+
+function renderMapMarkers(data) {
+  markers.forEach(function(m){ map.removeLayer(m); });
+  markers = [];
+  data.forEach(function(l) {
+    if (!l.lat || !l.lng) return;
+    var icon = L.divIcon({className:"",html:"<div style='background:" + (l.price===0?"#1a7a4a":"#d93025") + ";color:white;padding:4px 8px;font-family:Bebas Neue,sans-serif;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.3)'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div>",iconAnchor:[20,16]});
+    var m = L.marker([l.lat, l.lng], {icon:icon}).addTo(map);
+    m.bindPopup("<div class='popup-title'>" + l.title + "</div><div class='popup-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div><div style='font-size:11px;color:#7a7168'>" + l.location + "</div><button class='popup-btn' onclick='openDetail(" + l.id + ")'>View Listing</button>");
+    markers.push(m);
+  });
+}
+
+function renderMapList(data) {
+  document.getElementById("mapListingsList").innerHTML = data.map(function(l) {
+    return "<div class='map-listing-item' onclick='openDetail(" + l.id + ")'><div style='display:flex;justify-content:space-between;gap:8px'><div><div class='map-listing-title'>" + l.title + "</div><div class='map-listing-loc'>" + l.location + "</div></div><div class='map-listing-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>";
+  }).join("");
+}
+
+function openDetail(id) {
+  var l = allListings.filter(function(x){ return x.id === id; })[0];
+  if (!l) return;
+  var s = sellers[l.sellerId] || {name:"Unknown",emoji:"👤",rating:"N/A",sales:0};
+  document.getElementById("detailCat").textContent = l.cat + " · " + l.condition + " · " + l.location;
+  document.getElementById("detailTitle").textContent = l.title;
+  document.getElementById("detailPrice").textContent = l.price === 0 ? "FREE" : "$" + l.price.toLocaleString();
+  document.getElementById("detailDesc").textContent = l.desc;
+  var imgArea = document.getElementById("detailImgArea");
+  imgArea.innerHTML = "";
+  var catColors = {'Electronics':'#1a1a2e','Vehicles':'#200a00','Furniture':'#2a1f00','Clothing':'#20002a','Garden':'#002a0a','Sports':'#002a2a','Tools':'#1f0a00','Books':'#00152a','Free':'#0a2000'};
+  imgArea.style.cssText = "background:" + (catColors[l.cat]||'#1a1a1a') + ";display:flex;align-items:center;justify-content:center;font-size:90px;opacity:1";
+  imgArea.textContent = getEmoji(l);
+  open_("detailModal");
+}
+
+function openMessages() { open_("msgModal"); renderThreads(); }
+function openMessagesWithSeller(sellerId, listingId) {
+  var conv = conversations.filter(function(c){ return c.sellerId === sellerId; })[0];
+  if (!conv) {
+    var l = allListings.filter(function(x){ return x.id === listingId; })[0];
+    conv = {id:Date.now(),sellerId:sellerId,listingId:listingId,unread:0,messages:[{from:"system",text:"Conversation started about: " + (l ? l.title : "item"),time:"Just now"}]};
+    conversations.unshift(conv);
+  }
+  open_("msgModal");
+  renderThreads();
+  selectThread(conv.id);
+}
+
+function renderThreads() {
+  var total = conversations.reduce(function(s,c){ return s + c.unread; }, 0);
+  document.getElementById("msgBadge").textContent = total;
+  document.getElementById("threadList").innerHTML = conversations.map(function(c) {
+    var s = sellers[c.sellerId] || {name:"Unknown",emoji:"👤"};
+    var l = allListings.filter(function(x){ return x.id === c.listingId; })[0];
+    var last = c.messages[c.messages.length - 1];
+    return "<div class='thread-item" + (activeThread===c.id?" active":"") + "' onclick='selectThread(" + c.id + ")'>" +
+      "<div class='thread-flex'><div class='thread-avatar'>" + s.emoji + "</div><div style='flex:1;min-width:0'>" +
+      "<div class='thread-row1'><span class='thread-name'>" + s.name + "</span><span class='thread-time'>" + last.time + "</span></div>" +
+      "<div class='thread-preview'>" + (last.from==="me"?"You: ":"") + last.text + "</div>" +
+      (l ? "<div style='font-size:10px;color:var(--muted);margin-top:2px'>" + l.title.substring(0,28) + "...</div>" : "") +
+      "</div></div>" + (c.unread > 0 && activeThread !== c.id ? "<div class='thread-unread'></div>" : "") + "</div>";
+  }).join("");
+}
+
+function selectThread(id) {
+  activeThread = id;
+  var conv = conversations.filter(function(c){ return c.id === id; })[0];
+  if (!conv) return;
+  conv.unread = 0;
+  renderThreads();
+  var s = sellers[conv.sellerId] || {name:"Unknown",emoji:"👤"};
+  var l = allListings.filter(function(x){ return x.id === conv.listingId; })[0];
+  document.getElementById("msgMain").innerHTML =
+    "<div class='msg-chat-hdr'><div class='msg-chat-avatar'>" + s.emoji + "</div><div><div class='msg-chat-name'>" + s.name + "</div>" +
+    (l ? "<div class='msg-chat-item'>" + l.title + "</div>" : "") + "</div></div>" +
+    (l ? "<div style='padding:8px 14px;background:var(--cream);border-bottom:1px solid var(--border);cursor:pointer' onclick='openDetail(" + l.id + ")'><div class='msg-item-ref'><div class='msg-item-ref-title'>" + l.title + "</div><div class='msg-item-ref-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>" : "") +
+    "<div class='msg-body' id='msgBody'><div class='msg-date-divider'><span>Today</span></div>" +
+    conv.messages.map(function(m) {
+      if (m.from === "system") return "<div style='text-align:center;font-size:11px;color:var(--muted);padding:4px'>" + m.text + "</div>";
+      return "<div class='msg-bubble-wrap " + m.from + "'><div class='msg-bubble " + m.from + "'>" + m.text + "</div><div class='msg-time'>" + m.time + "</div></div>";
+    }).join("") + "</div>" +
+    "<div class='msg-input-row'><textarea class='msg-input' id='msgInput' rows='2' placeholder='Type a message...' onkeydown='msgKeydown(event," + conv.id + ")'></textarea>" +
+    "<button class='msg-action-btn' onclick='showOfferPrompt(" + conv.id + ")'>💰</button>" +
+    "<button class='msg-send-btn' onclick='sendMsg(" + conv.id + ")'>Send</button></div>";
+  setTimeout(function(){ var b=document.getElementById("msgBody"); if(b) b.scrollTop=b.scrollHeight; }, 50);
+}
+
+function msgKeydown(e, cid) { if (e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMsg(cid);} }
+
+function sendMsg(cid) {
+  var input = document.getElementById("msgInput");
+  var text = input ? input.value.trim() : "";
+  if (!text) return;
+  var conv = conversations.filter(function(c){ return c.id===cid; })[0];
+  if (!conv) return;
+  conv.messages.push({from:"me",text:text,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});
+  input.value = "";
+  selectThread(cid);
+  setTimeout(function() {
+    var replies = ["Thanks! I will get back to you shortly.","Sure, that works!","Can you go a little lower?","I can meet tomorrow afternoon.","The item is exactly as described."];
+    conv.messages.push({from:"them",text:replies[Math.floor(Math.random()*replies.length)],time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});
+    if (activeThread === cid) selectThread(cid);
+    else { conv.unread++; document.getElementById("msgBadge").textContent = conversations.reduce(function(s,c){ return s+c.unread; },0); }
+  }, 1800);
+}
+
+function showOfferPrompt(cid) {
+  var amount = prompt("Enter your offer amount ($):");
+  if (amount && !isNaN(amount)) {
+    var conv = conversations.filter(function(c){ return c.id===cid; })[0];
+    if (!conv) return;
+    conv.messages.push({from:"me",text:"Offer: $" + parseInt(amount).toLocaleString(),time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});
+    selectThread(cid);
+  }
+}
+
+function openProfile(sellerId) {
+  var s = sellers[sellerId]; if (!s) return;
+  document.getElementById("profileAvatar").textContent = s.emoji;
+  document.getElementById("profileName").textContent = s.name;
+  document.getElementById("profileSince").textContent = "Member since " + s.since;
+  document.getElementById("pSales").textContent = s.sales;
+  var sl = allListings.filter(function(l){ return l.sellerId===sellerId; });
+  document.getElementById("pListings").textContent = sl.length;
+  document.getElementById("pRating").textContent = s.rating;
+  document.getElementById("pResponse").textContent = s.response;
+  var bmap = {verified:{label:"Verified",cls:"badge-verified"},trusted:{label:"Trusted",cls:"badge-trusted"},seller:{label:"Top Seller",cls:"badge-seller"}};
+  document.getElementById("profileBadges").innerHTML = (s.badges||[]).map(function(b){ return "<div class='profile-badge " + bmap[b].cls + "'>" + bmap[b].label + "</div>"; }).join("");
+  document.getElementById("profileListings").innerHTML = sl.slice(0,6).map(function(l) {
+    var pr = l.price===0 ? "FREE" : "$"+l.price.toLocaleString();
+    var catColors2 = {'Electronics':'#1a1a2e','Vehicles':'#1a0a00','Furniture':'#2a1f00','Clothing':'#1a0020','Garden':'#001a05','Sports':'#001a1a','Tools':'#1a0a00','Books':'#00101a','Free':'#0a1a00'};
+    var thumb = "<div style='position:absolute;inset:0;background:" + (catColors2[l.cat]||'#1a1a1a') + ";display:flex;align-items:center;justify-content:center;font-size:28px'>" + getEmoji(l) + "</div>";
+    return '<div class="profile-listing-thumb" onclick="openDetail('+l.id+')">'+thumb+'<div class="profile-listing-price">'+pr+'</div></div>';
+  }).join("")
+  document.getElementById("profileReviews").innerHTML = (s.reviews||[]).map(function(r) {
+    return "<div class='review-item'><div class='review-top'><span class='review-stars'>" + "⭐".repeat(r.stars) + "</span><span class='review-date'>" + r.date + "</span></div><div class='review-author'>" + r.author + "</div><div class='review-text'>" + r.text + "</div></div>";
+  }).join("");
+  document.getElementById("profileMsgBtn").onclick = function(){ close_("profileModal"); openMessagesWithSeller(sellerId, sl[0]&&sl[0].id); };
+  open_("profileModal");
+}
+function openMyProfile(){ openProfile(1); }
+
+function openPostModal(){ open_("postModal"); }
+function submitAd() {
+  var title = document.getElementById("newTitle").value.trim();
+  var cat = document.getElementById("newCat").value;
+  var price = parseInt(document.getElementById("newPrice").value)||0;
+  var desc = document.getElementById("newDesc").value.trim();
+  var email = document.getElementById("newEmail").value.trim();
+  var location = document.getElementById("newLocation").value.trim()||"Your City";
+  var condition = document.getElementById("newCondition").value;
+  if (!title||!cat||!desc||!email){showToast("Please fill in all required fields");return;}
+  var newAd = {id:Date.now(),title:title,cat:cat,price:price,condition:condition,location:location,lat:39.5+Math.random()*10-5,lng:-98.35+Math.random()*30-15,desc:desc,sellerId:1,badge:"new",posted:"Just now",img:null};
+  allListings.unshift(newAd);
+  activeListings = allListings.slice();
+  close_("postModal");
+  filterCat("All");
+  showToast("Ad published successfully!");
+  ["newTitle","newPrice","newDesc","newEmail","newLocation"].forEach(function(id){ document.getElementById(id).value=""; });
+  document.getElementById("newCat").value="";
+}
+
+function openAuth(e){ e.preventDefault(); open_("authModal"); }
+function switchAuth(tab, form) {
+  document.querySelectorAll(".auth-tab").forEach(function(t){ t.classList.remove("active"); });
+  tab.classList.add("active");
+  document.getElementById("signInForm").style.display = form==="signIn"?"block":"none";
+  document.getElementById("registerForm").style.display = form==="register"?"block":"none";
+}
+function doSignIn(){ close_("authModal"); showToast("Signed in successfully!"); }
+function doRegister(){ close_("authModal"); showToast("Account created! Welcome!"); }
+
+function open_(id){ document.getElementById(id).classList.add("open"); }
+function close_(id){ document.getElementById(id).classList.remove("open"); }
+function closeOnOverlay(e, id){ if(e.target.id===id) close_(id); }
+
+var toastTimer;
+function showToast(msg){
+  clearTimeout(toastTimer);
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2800);
+}
+
+renderListings(allListings);
+</script>
+</body>
+</html>
