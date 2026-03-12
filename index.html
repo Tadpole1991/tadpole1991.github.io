@@ -165,8 +165,8 @@ header{background:var(--ink);color:#fff;padding:0 32px;border-bottom:4px solid v
 .detail-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border)}
 .detail-cat{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
 .detail-body{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;flex:1;max-height:75vh}
-.detail-image-area{background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.18;min-height:280px;overflow:hidden}
-.detail-image-area img{width:100%;height:100%;object-fit:cover;opacity:1}
+.detail-image-area{background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:80px;min-height:280px;overflow:hidden}
+.detail-image-area img{width:100%;height:100%;object-fit:cover}
 .detail-info{padding:20px;display:flex;flex-direction:column;overflow-y:auto}
 .detail-title{font-family:"Bebas Neue",sans-serif;font-size:28px;letter-spacing:0.04em;line-height:1.1;margin-bottom:5px}
 .detail-price{font-family:"Bebas Neue",sans-serif;font-size:36px;color:var(--red);margin-bottom:14px;line-height:1}
@@ -250,9 +250,9 @@ header{background:var(--ink);color:#fff;padding:0 32px;border-bottom:4px solid v
 .badge-trusted{background:var(--yellow);color:var(--ink)}
 .badge-seller{background:var(--blue);color:#fff}
 .profile-listings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
-.profile-listing-thumb{background:var(--cream);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;opacity:0.6;cursor:pointer;transition:opacity 0.15s;position:relative;overflow:hidden}
-.profile-listing-thumb:hover{opacity:1}
-.profile-listing-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:1}
+.profile-listing-thumb{background:var(--cream);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:opacity 0.15s;position:relative;overflow:hidden}
+.profile-listing-thumb:hover{opacity:0.85}
+.profile-listing-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
 .profile-listing-price{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-family:"Bebas Neue",sans-serif;font-size:15px;background:rgba(0,0,0,0.6);color:#fff;padding:2px 0;z-index:1}
 .reviews-list{display:flex;flex-direction:column;gap:12px}
 .review-item{padding:12px;background:var(--card);border:1px solid var(--border)}
@@ -311,8 +311,8 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
 
 <header>
   <div class="header-top">
-    <span id="liveDate"></span><span style="color:var(--yellow);font-weight:bold;margin-left:12px">v3.0-FIXED</span>
-    <span>Nationwide &middot; <strong style="color:rgba(255,255,255,0.65)">0 active listings</strong></span>
+    <span id="liveDate"></span>
+    <span>Nationwide &middot; <strong style="color:rgba(255,255,255,0.65)">32 active listings</strong></span>
   </div>
   <div class="header-main">
     <div>
@@ -357,9 +357,9 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
     <button class="search-btn" onclick="doSearch()">Search &rarr;</button>
   </div>
   <div class="hero-stats">
-    <div class="stat"><strong>0</strong>Active Listings</div>
-    <div class="stat"><strong>0</strong>Added Today</div>
-    <div class="stat"><strong>0</strong>Total Members</div>
+    <div class="stat"><strong id="statListings">32</strong>Active Listings</div>
+    <div class="stat"><strong>12</strong>Added Today</div>
+    <div class="stat"><strong>1,284</strong>Total Members</div>
   </div>
 </div>
 
@@ -410,7 +410,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
 
   <div id="listingsPanel" class="listings-panel">
     <div class="listings-header">
-      <div class="listings-count"><strong id="resultCount">0</strong> listings found</div>
+      <div class="listings-count"><strong id="resultCount">32</strong> listings found</div>
       <div class="sort-row">
         <span class="sort-label">Sort:</span>
         <select class="sort-select" onchange="sortListings(this.value)">
@@ -424,12 +424,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
         </div>
       </div>
     </div>
-    <div class="listings-grid" id="listingsGrid">
-  <div class="ad-card" style="border:2px solid orange;padding:20px;background:white;grid-column:1/-1;text-align:center">
-    <strong style="font-size:18px">⚡ Loading listings...</strong><br>
-    <span style="color:#7a7168;font-size:12px">If you see this, JavaScript may be disabled</span>
-  </div>
-</div>
+    <div class="listings-grid" id="listingsGrid"></div>
     <div class="pagination">
       <button class="page-btn">&lsaquo;</button>
       <button class="page-btn active">1</button>
@@ -585,53 +580,52 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
 
 <div class="toast" id="toast"></div>
 
-
 <script>
 const allListings = [
-  {id:1,title:'iPhone 14 Pro 256GB',cat:'Electronics',price:699,condition:'Like New',location:'New York, NY',lat:40.7128,lng:-74.006,desc:'Space Black, no scratches. Comes with original box, cable, and case. Battery health 94%.',sellerId:1,badge:'hot',posted:'2h ago',img:'https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=600&q=80'},
-  {id:2,title:'IKEA KALLAX Shelf Unit',cat:'Furniture',price:45,condition:'Good',location:'Brooklyn, NY',lat:40.6782,lng:-73.9442,desc:'4x4 cube shelving unit in white. Minor scuffs on bottom edge. Buyer must collect.',sellerId:2,badge:null,posted:'5h ago',img:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80'},
-  {id:3,title:'Trek FX 3 Disc 2023',cat:'Sports',price:780,condition:'Like New',location:'Chicago, IL',lat:41.8781,lng:-87.6298,desc:'Barely ridden, only 40 miles. Includes lights, lock, and rear rack. Size medium.',sellerId:3,badge:'new',posted:'1h ago',img:'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=600&q=80'},
-  {id:4,title:'MacBook Pro M2 14in',cat:'Electronics',price:1499,condition:'Good',location:'Los Angeles, CA',lat:34.0522,lng:-118.2437,desc:'8GB RAM, 512GB SSD. Some light wear on lid. Fully functional, includes charger.',sellerId:4,badge:'hot',posted:'3h ago',img:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&q=80'},
-  {id:5,title:'Free Moving Boxes (20+)',cat:'Free',price:0,condition:'Good',location:'Austin, TX',lat:30.2672,lng:-97.7431,desc:'Leftover from moving. Various sizes, most in decent condition. First come first served.',sellerId:5,badge:'sale',posted:'30m ago',img:'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&q=80'},
-  {id:6,title:'Vintage Leather Jacket M',cat:'Clothing',price:120,condition:'Good',location:'Seattle, WA',lat:47.6062,lng:-122.3321,desc:'Brown genuine leather, size medium. 1990s vintage find. Some natural patina.',sellerId:6,badge:null,posted:'6h ago',img:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80'},
-  {id:7,title:'DeWalt 20V Drill Set',cat:'Tools',price:95,condition:'Good',location:'Houston, TX',lat:29.7604,lng:-95.3698,desc:'Drill + circular saw combo. Two batteries included. Light use, well maintained.',sellerId:7,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&q=80'},
-  {id:8,title:'Sony WH-1000XM5',cat:'Electronics',price:210,condition:'Like New',location:'Denver, CO',lat:39.7392,lng:-104.9903,desc:'Purchased 6 months ago. Includes case and cables. Noise cancelling works perfectly.',sellerId:8,badge:'new',posted:'4h ago',img:'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&q=80'},
-  {id:9,title:'2018 Honda Civic EX',cat:'Vehicles',price:14500,condition:'Good',location:'Phoenix, AZ',lat:33.4484,lng:-112.074,desc:'78k miles. Clean title, no accidents. Recent oil change and new tires. Blue exterior.',sellerId:9,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&q=80'},
-  {id:10,title:'Garden Tool Set (8 pcs)',cat:'Garden',price:30,condition:'Good',location:'Portland, OR',lat:45.5051,lng:-122.675,desc:'Full set including trowel, rake, shears, and more. Stored in shed, minor rust.',sellerId:2,badge:null,posted:'2d ago',img:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80'},
-  {id:11,title:'Harry Potter Complete Set',cat:'Books',price:22,condition:'Good',location:'Boston, MA',lat:42.3601,lng:-71.0589,desc:'All 7 hardcover books. Some wear on spines but all readable. Great set for a fan.',sellerId:3,badge:null,posted:'3h ago',img:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80'},
-  {id:12,title:'Nintendo Switch OLED',cat:'Electronics',price:280,condition:'Like New',location:'San Jose, CA',lat:37.3382,lng:-121.8863,desc:'White edition with dock and both Joy-Cons. Comes with 4 games. Screen is perfect.',sellerId:4,badge:'hot',posted:'1h ago',img:'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=600&q=80'},
-  {id:13,title:'Standing Desk 60in Electric',cat:'Furniture',price:220,condition:'Like New',location:'Austin, TX',lat:30.2975,lng:-97.7328,desc:'Flexispot E7 frame, bamboo top. Height memory presets. Works perfectly, moving out.',sellerId:5,badge:'new',posted:'8h ago',img:'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&q=80'},
-  {id:14,title:'Road Bike Cannondale',cat:'Sports',price:950,condition:'Good',location:'Minneapolis, MN',lat:44.9778,lng:-93.265,desc:'CAAD12 Ultegra. Size 54cm. Tuned last month. Ideal for experienced riders.',sellerId:6,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=600&q=80'},
-  {id:15,title:'Levis 501 Bundle (4 pairs)',cat:'Clothing',price:80,condition:'Good',location:'Nashville, TN',lat:36.1627,lng:-86.7816,desc:'Sizes 32x32 and 34x30. All worn gently. Mix of blue and black washes.',sellerId:7,badge:'sale',posted:'5h ago',img:'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80'},
-  {id:16,title:'Free Firewood — Self Collect',cat:'Free',price:0,condition:'Fair',location:'Richmond, VA',lat:37.5407,lng:-77.436,desc:'Approx half cord of mixed hardwood. Split and dried. Bring your truck.',sellerId:8,badge:'sale',posted:'Today',img:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80'},
-  {id:17,title:'Samsung 65in QLED 4K TV',cat:'Electronics',price:520,condition:'Like New',location:'Atlanta, GA',lat:33.749,lng:-84.388,desc:'Samsung Q80B, 2022 model. Stunning picture quality, all cables included. No dead pixels.',sellerId:3,badge:'hot',posted:'2h ago',img:'https://images.unsplash.com/photo-1593359677879-a4bb92f4834b?w=600&q=80'},
-  {id:18,title:'Peloton Bike+',cat:'Sports',price:1200,condition:'Good',location:'San Francisco, CA',lat:37.7749,lng:-122.4194,desc:'Includes weights, mat, and shoes size 10. Subscription not included. Works perfectly.',sellerId:4,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80'},
-  {id:19,title:'Dining Table + 6 Chairs',cat:'Furniture',price:340,condition:'Good',location:'Dallas, TX',lat:32.7767,lng:-96.797,desc:'Solid wood farmhouse table, 72in. Chairs have minor wear on seat cushions. Very sturdy.',sellerId:5,badge:null,posted:'3h ago',img:'https://images.unsplash.com/photo-1615066688168-b32b66d12f54?w=600&q=80'},
-  {id:20,title:'Canon EOS R6 Body',cat:'Electronics',price:1650,condition:'Like New',location:'Miami, FL',lat:25.7617,lng:-80.1918,desc:'Only 4,200 shutter actuations. Comes with original box, two batteries, and charger.',sellerId:1,badge:'new',posted:'1h ago',img:'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&q=80'},
-  {id:21,title:'Air Jordan 1 Retro OG sz11',cat:'Clothing',price:210,condition:'New',location:'Chicago, IL',lat:41.8827,lng:-87.6233,desc:'Brand new in box, never worn. Chicago colorway. Bought as investment, need space.',sellerId:6,badge:'new',posted:'4h ago',img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80'},
-  {id:22,title:'Weber Spirit E-310 Grill',cat:'Garden',price:180,condition:'Good',location:'Charlotte, NC',lat:35.2271,lng:-80.8431,desc:'3-burner propane grill. Cleaned and ready for summer. Comes with half-full propane tank.',sellerId:7,badge:null,posted:'5h ago',img:'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80'},
-  {id:23,title:'PlayStation 5 Disc Edition',cat:'Electronics',price:399,condition:'Like New',location:'Las Vegas, NV',lat:36.1699,lng:-115.1398,desc:'Barely used, comes with two controllers and 3 games. All original packaging included.',sellerId:2,badge:'hot',posted:'30m ago',img:'https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=600&q=80'},
-  {id:24,title:'Craftsman Tool Chest 26in',cat:'Tools',price:145,condition:'Good',location:'Columbus, OH',lat:39.9612,lng:-82.9988,desc:'7-drawer rolling chest, all drawers smooth. Some surface scratches but fully functional.',sellerId:9,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=600&q=80'},
-  {id:25,title:'Mid-Century Accent Chair',cat:'Furniture',price:95,condition:'Good',location:'Portland, OR',lat:45.512,lng:-122.658,desc:'Walnut legs, mustard yellow fabric. Light wear on armrests. Pickup only.',sellerId:3,badge:null,posted:'6h ago',img:'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=600&q=80'},
-  {id:26,title:'Free Baby Clothes 0–12mo',cat:'Free',price:0,condition:'Good',location:'Sacramento, CA',lat:38.5816,lng:-121.4944,desc:'3 large bags of gently used baby clothes, mixed brands. Washed and ready to go.',sellerId:5,badge:'sale',posted:'Today',img:'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600&q=80'},
-  {id:27,title:'Kindle Paperwhite 11th Gen',cat:'Electronics',price:85,condition:'Like New',location:'Baltimore, MD',lat:39.2904,lng:-76.6122,desc:'Waterproof, 32GB, with backlight. Includes original charging cable and case.',sellerId:8,badge:null,posted:'8h ago',img:'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80'},
-  {id:28,title:'Road Cycling Shoes Sz 43',cat:'Sports',price:60,condition:'Good',location:'Boulder, CO',lat:40.015,lng:-105.2705,desc:'Shimano RC3 SPD-SL. Used one season. Cleats included. Great entry-level shoe.',sellerId:6,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80'},
-  {id:29,title:'Vintage Levis Trucker Jacket',cat:'Clothing',price:75,condition:'Good',location:'Nashville, TN',lat:36.175,lng:-86.788,desc:'Size L, classic wash. Authentic 1980s tag. Minor fading adds to the character.',sellerId:7,badge:null,posted:'2d ago',img:'https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?w=600&q=80'},
-  {id:30,title:'2020 Toyota Camry SE',cat:'Vehicles',price:22500,condition:'Like New',location:'Orlando, FL',lat:28.5383,lng:-81.3792,desc:'32k miles, one owner, no accidents. Moonroof, Apple CarPlay, heated seats. Must see.',sellerId:1,badge:'new',posted:'3h ago',img:'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600&q=80'},
-  {id:31,title:'KitchenAid Stand Mixer',cat:'Furniture',price:175,condition:'Good',location:'Pittsburgh, PA',lat:40.4406,lng:-79.9959,desc:'5-quart tilt-head in Empire Red. All attachments included. Works perfectly.',sellerId:2,badge:null,posted:'4h ago',img:'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80'},
-  {id:32,title:'Acoustic Guitar — Yamaha FG800',cat:'Sports',price:110,condition:'Good',location:'Tucson, AZ',lat:32.2226,lng:-110.9747,desc:'Great beginner/intermediate guitar. Has been restrung recently. Includes soft case.',sellerId:4,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80'},
+  {id:1,title:'iPhone 14 Pro 256GB',cat:'Electronics',price:699,condition:'Like New',location:'New York, NY',lat:40.7128,lng:-74.006,desc:'Space Black, no scratches. Comes with original box, cable, and case. Battery health 94%.',sellerId:1,badge:'hot',posted:'2h ago'},
+  {id:2,title:'IKEA KALLAX Shelf Unit',cat:'Furniture',price:45,condition:'Good',location:'Brooklyn, NY',lat:40.6782,lng:-73.9442,desc:'4x4 cube shelving unit in white. Minor scuffs on bottom edge. Buyer must collect.',sellerId:2,badge:null,posted:'5h ago'},
+  {id:3,title:'Trek FX 3 Disc 2023',cat:'Sports',price:780,condition:'Like New',location:'Chicago, IL',lat:41.8781,lng:-87.6298,desc:'Barely ridden, only 40 miles. Includes lights, lock, and rear rack. Size medium.',sellerId:3,badge:'new',posted:'1h ago'},
+  {id:4,title:'MacBook Pro M2 14in',cat:'Electronics',price:1499,condition:'Good',location:'Los Angeles, CA',lat:34.0522,lng:-118.2437,desc:'8GB RAM, 512GB SSD. Some light wear on lid. Fully functional, includes charger.',sellerId:4,badge:'hot',posted:'3h ago'},
+  {id:5,title:'Free Moving Boxes (20+)',cat:'Free',price:0,condition:'Good',location:'Austin, TX',lat:30.2672,lng:-97.7431,desc:'Leftover from moving. Various sizes, most in decent condition. First come first served.',sellerId:5,badge:'sale',posted:'30m ago'},
+  {id:6,title:'Vintage Leather Jacket M',cat:'Clothing',price:120,condition:'Good',location:'Seattle, WA',lat:47.6062,lng:-122.3321,desc:'Brown genuine leather, size medium. 1990s vintage find. Some natural patina.',sellerId:6,badge:null,posted:'6h ago'},
+  {id:7,title:'DeWalt 20V Drill Set',cat:'Tools',price:95,condition:'Good',location:'Houston, TX',lat:29.7604,lng:-95.3698,desc:'Drill + circular saw combo. Two batteries included. Light use, well maintained.',sellerId:7,badge:null,posted:'Yesterday'},
+  {id:8,title:'Sony WH-1000XM5',cat:'Electronics',price:210,condition:'Like New',location:'Denver, CO',lat:39.7392,lng:-104.9903,desc:'Purchased 6 months ago. Includes case and cables. Noise cancelling works perfectly.',sellerId:8,badge:'new',posted:'4h ago'},
+  {id:9,title:'2018 Honda Civic EX',cat:'Vehicles',price:14500,condition:'Good',location:'Phoenix, AZ',lat:33.4484,lng:-112.074,desc:'78k miles. Clean title, no accidents. Recent oil change and new tires. Blue exterior.',sellerId:9,badge:null,posted:'Yesterday'},
+  {id:10,title:'Garden Tool Set (8 pcs)',cat:'Garden',price:30,condition:'Good',location:'Portland, OR',lat:45.5051,lng:-122.675,desc:'Full set including trowel, rake, shears, and more. Stored in shed, minor rust.',sellerId:2,badge:null,posted:'2d ago'},
+  {id:11,title:'Harry Potter Complete Set',cat:'Books',price:22,condition:'Good',location:'Boston, MA',lat:42.3601,lng:-71.0589,desc:'All 7 hardcover books. Some wear on spines but all readable. Great set for a fan.',sellerId:3,badge:null,posted:'3h ago'},
+  {id:12,title:'Nintendo Switch OLED',cat:'Electronics',price:280,condition:'Like New',location:'San Jose, CA',lat:37.3382,lng:-121.8863,desc:'White edition with dock and both Joy-Cons. Comes with 4 games. Screen is perfect.',sellerId:4,badge:'hot',posted:'1h ago'},
+  {id:13,title:'Standing Desk 60in Electric',cat:'Furniture',price:220,condition:'Like New',location:'Austin, TX',lat:30.2975,lng:-97.7328,desc:'Flexispot E7 frame, bamboo top. Height memory presets. Works perfectly, moving out.',sellerId:5,badge:'new',posted:'8h ago'},
+  {id:14,title:'Road Bike Cannondale',cat:'Sports',price:950,condition:'Good',location:'Minneapolis, MN',lat:44.9778,lng:-93.265,desc:'CAAD12 Ultegra. Size 54cm. Tuned last month. Ideal for experienced riders.',sellerId:6,badge:null,posted:'Yesterday'},
+  {id:15,title:'Levis 501 Bundle (4 pairs)',cat:'Clothing',price:80,condition:'Good',location:'Nashville, TN',lat:36.1627,lng:-86.7816,desc:'Sizes 32x32 and 34x30. All worn gently. Mix of blue and black washes.',sellerId:7,badge:'sale',posted:'5h ago'},
+  {id:16,title:'Free Firewood — Self Collect',cat:'Free',price:0,condition:'Fair',location:'Richmond, VA',lat:37.5407,lng:-77.436,desc:'Approx half cord of mixed hardwood. Split and dried. Bring your truck.',sellerId:8,badge:'sale',posted:'Today'},
+  {id:17,title:'Samsung 65in QLED 4K TV',cat:'Electronics',price:520,condition:'Like New',location:'Atlanta, GA',lat:33.749,lng:-84.388,desc:'Samsung Q80B, 2022 model. Stunning picture quality, all cables included. No dead pixels.',sellerId:3,badge:'hot',posted:'2h ago'},
+  {id:18,title:'Peloton Bike+',cat:'Sports',price:1200,condition:'Good',location:'San Francisco, CA',lat:37.7749,lng:-122.4194,desc:'Includes weights, mat, and shoes size 10. Subscription not included. Works perfectly.',sellerId:4,badge:null,posted:'Yesterday'},
+  {id:19,title:'Dining Table + 6 Chairs',cat:'Furniture',price:340,condition:'Good',location:'Dallas, TX',lat:32.7767,lng:-96.797,desc:'Solid wood farmhouse table, 72in. Chairs have minor wear on seat cushions. Very sturdy.',sellerId:5,badge:null,posted:'3h ago'},
+  {id:20,title:'Canon EOS R6 Body',cat:'Electronics',price:1650,condition:'Like New',location:'Miami, FL',lat:25.7617,lng:-80.1918,desc:'Only 4,200 shutter actuations. Comes with original box, two batteries, and charger.',sellerId:1,badge:'new',posted:'1h ago'},
+  {id:21,title:'Air Jordan 1 Retro OG sz11',cat:'Clothing',price:210,condition:'New',location:'Chicago, IL',lat:41.8827,lng:-87.6233,desc:'Brand new in box, never worn. Chicago colorway. Bought as investment, need space.',sellerId:6,badge:'new',posted:'4h ago'},
+  {id:22,title:'Weber Spirit E-310 Grill',cat:'Garden',price:180,condition:'Good',location:'Charlotte, NC',lat:35.2271,lng:-80.8431,desc:'3-burner propane grill. Cleaned and ready for summer. Comes with half-full propane tank.',sellerId:7,badge:null,posted:'5h ago'},
+  {id:23,title:'PlayStation 5 Disc Edition',cat:'Electronics',price:399,condition:'Like New',location:'Las Vegas, NV',lat:36.1699,lng:-115.1398,desc:'Barely used, comes with two controllers and 3 games. All original packaging included.',sellerId:2,badge:'hot',posted:'30m ago'},
+  {id:24,title:'Craftsman Tool Chest 26in',cat:'Tools',price:145,condition:'Good',location:'Columbus, OH',lat:39.9612,lng:-82.9988,desc:'7-drawer rolling chest, all drawers smooth. Some surface scratches but fully functional.',sellerId:9,badge:null,posted:'Yesterday'},
+  {id:25,title:'Mid-Century Accent Chair',cat:'Furniture',price:95,condition:'Good',location:'Portland, OR',lat:45.512,lng:-122.658,desc:'Walnut legs, mustard yellow fabric. Light wear on armrests. Pickup only.',sellerId:3,badge:null,posted:'6h ago'},
+  {id:26,title:'Free Baby Clothes 0–12mo',cat:'Free',price:0,condition:'Good',location:'Sacramento, CA',lat:38.5816,lng:-121.4944,desc:'3 large bags of gently used baby clothes, mixed brands. Washed and ready to go.',sellerId:5,badge:'sale',posted:'Today'},
+  {id:27,title:'Kindle Paperwhite 11th Gen',cat:'Electronics',price:85,condition:'Like New',location:'Baltimore, MD',lat:39.2904,lng:-76.6122,desc:'Waterproof, 32GB, with backlight. Includes original charging cable and case.',sellerId:8,badge:null,posted:'8h ago'},
+  {id:28,title:'Road Cycling Shoes Sz 43',cat:'Sports',price:60,condition:'Good',location:'Boulder, CO',lat:40.015,lng:-105.2705,desc:'Shimano RC3 SPD-SL. Used one season. Cleats included. Great entry-level shoe.',sellerId:6,badge:null,posted:'Yesterday'},
+  {id:29,title:'Vintage Levis Trucker Jacket',cat:'Clothing',price:75,condition:'Good',location:'Nashville, TN',lat:36.175,lng:-86.788,desc:'Size L, classic wash. Authentic 1980s tag. Minor fading adds to the character.',sellerId:7,badge:null,posted:'2d ago'},
+  {id:30,title:'2020 Toyota Camry SE',cat:'Vehicles',price:22500,condition:'Like New',location:'Orlando, FL',lat:28.5383,lng:-81.3792,desc:'32k miles, one owner, no accidents. Moonroof, Apple CarPlay, heated seats. Must see.',sellerId:1,badge:'new',posted:'3h ago'},
+  {id:31,title:'KitchenAid Stand Mixer',cat:'Furniture',price:175,condition:'Good',location:'Pittsburgh, PA',lat:40.4406,lng:-79.9959,desc:'5-quart tilt-head in Empire Red. All attachments included. Works perfectly.',sellerId:2,badge:null,posted:'4h ago'},
+  {id:32,title:'Acoustic Guitar — Yamaha FG800',cat:'Sports',price:110,condition:'Good',location:'Tucson, AZ',lat:32.2226,lng:-110.9747,desc:'Great beginner/intermediate guitar. Has been restrung recently. Includes soft case.',sellerId:4,badge:null,posted:'Yesterday'},
 ];
 
 const sellers = {
-  1:{name:'Mike T.',emoji:'😎',since:'Jan 2022',sales:23,listings:5,rating:'4.9',response:'< 1hr',badges:['verified','trusted'],bio:'Electronics enthusiast. Fast shipper, honest descriptions.',reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'},{stars:5,author:'Kate B.',date:'Jan 2026',text:'Great seller, very communicative throughout the process.'}]},
-  2:{name:'Sarah K.',emoji:'🌸',since:'Mar 2021',sales:11,listings:3,rating:'4.7',response:'~2hrs',badges:['verified'],bio:'Moving out and decluttering. Everything must go!',reviews:[{stars:5,author:'Dana L.',date:'Feb 2026',text:'Lovely seller. Item was clean and ready for pickup.'},{stars:4,author:'Bob W.',date:'Dec 2025',text:'Good condition as described, smooth transaction.'}]},
-  3:{name:'Jordan R.',emoji:'🚴',since:'Jun 2023',sales:4,listings:2,rating:'5.0',response:'< 30min',badges:['verified','trusted','seller'],bio:'Sports & outdoor gear. All items well maintained.',reviews:[{stars:5,author:'Mike T.',date:'Mar 2026',text:'Incredible deal on the bike. Condition was even better than listed!'}]},
-  4:{name:'Alex P.',emoji:'💻',since:'Nov 2020',sales:17,listings:4,rating:'4.8',response:'~1hr',badges:['verified','trusted','seller'],bio:'Tech professional. Selling gently used Apple and Sony gear.',reviews:[{stars:5,author:'Priya N.',date:'Feb 2026',text:'Alex was extremely helpful and the MacBook works perfectly.'},{stars:4,author:'Ryan H.',date:'Jan 2026',text:'Fast, reliable seller. Packaged item really well.'}]},
-  5:{name:'Dana L.',emoji:'📦',since:'Aug 2022',sales:8,listings:3,rating:'4.6',response:'~3hrs',badges:['verified'],bio:'Just moved to a new city — giving away what I can\'t take!',reviews:[{stars:5,author:'Emma S.',date:'Feb 2026',text:'Dana was so generous. Boxes were in great shape.'}]},
-  6:{name:'Chris M.',emoji:'🧥',since:'Jan 2019',sales:31,listings:6,rating:'4.9',response:'< 1hr',badges:['verified','trusted','seller'],bio:'Vintage clothing collector. Over 5 years of trusted selling.',reviews:[{stars:5,author:'Tess V.',date:'Mar 2026',text:'The jacket is absolutely beautiful. Chris is a true professional.'},{stars:5,author:'Owen F.',date:'Feb 2026',text:'Responsive and fair. A pleasure to buy from.'}]},
-  7:{name:'Bob W.',emoji:'🔧',since:'May 2021',sales:6,listings:2,rating:'4.5',response:'~4hrs',badges:['verified'],bio:'Handyman selling off extra tools. All functional, used with care.',reviews:[{stars:4,author:'Luis G.',date:'Jan 2026',text:'Tools work great. Bob was a bit slow to respond but all good.'}]},
-  8:{name:'Priya N.',emoji:'🎧',since:'Sep 2022',sales:9,listings:4,rating:'5.0',response:'< 45min',badges:['verified','trusted'],bio:'Audio enthusiast. Everything I sell has been personally tested.',reviews:[{stars:5,author:'Alex P.',date:'Feb 2026',text:'Perfect condition headphones, Priya was fantastic to deal with.'},{stars:5,author:'Finn J.',date:'Jan 2026',text:'Exactly as described. One of the best sellers I\'ve met here.'}]},
-  9:{name:'Luis G.',emoji:'🚗',since:'Apr 2020',sales:2,listings:1,rating:'4.8',response:'~2hrs',badges:['verified'],bio:'Selling my old car to upgrade. Honest seller, come inspect it.',reviews:[{stars:5,author:'Chris M.',date:'Mar 2026',text:'Car was exactly as described, clean and runs great.'}]},
+  1:{name:'Mike T.',emoji:'😎',since:'Jan 2022',sales:23,listings:5,rating:'4.9',response:'< 1hr',badges:['verified','trusted'],reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'},{stars:5,author:'Kate B.',date:'Jan 2026',text:'Great seller, very communicative throughout the process.'}]},
+  2:{name:'Sarah K.',emoji:'🌸',since:'Mar 2021',sales:11,listings:3,rating:'4.7',response:'~2hrs',badges:['verified'],reviews:[{stars:5,author:'Dana L.',date:'Feb 2026',text:'Lovely seller. Item was clean and ready for pickup.'},{stars:4,author:'Bob W.',date:'Dec 2025',text:'Good condition as described, smooth transaction.'}]},
+  3:{name:'Jordan R.',emoji:'🚴',since:'Jun 2023',sales:4,listings:2,rating:'5.0',response:'< 30min',badges:['verified','trusted','seller'],reviews:[{stars:5,author:'Mike T.',date:'Mar 2026',text:'Incredible deal on the bike. Condition was even better than listed!'}]},
+  4:{name:'Alex P.',emoji:'💻',since:'Nov 2020',sales:17,listings:4,rating:'4.8',response:'~1hr',badges:['verified','trusted','seller'],reviews:[{stars:5,author:'Priya N.',date:'Feb 2026',text:'Alex was extremely helpful and the MacBook works perfectly.'},{stars:4,author:'Ryan H.',date:'Jan 2026',text:'Fast, reliable seller. Packaged item really well.'}]},
+  5:{name:'Dana L.',emoji:'📦',since:'Aug 2022',sales:8,listings:3,rating:'4.6',response:'~3hrs',badges:['verified'],reviews:[{stars:5,author:'Emma S.',date:'Feb 2026',text:'Dana was so generous. Boxes were in great shape.'}]},
+  6:{name:'Chris M.',emoji:'🧥',since:'Jan 2019',sales:31,listings:6,rating:'4.9',response:'< 1hr',badges:['verified','trusted','seller'],reviews:[{stars:5,author:'Tess V.',date:'Mar 2026',text:'The jacket is absolutely beautiful. Chris is a true professional.'},{stars:5,author:'Owen F.',date:'Feb 2026',text:'Responsive and fair. A pleasure to buy from.'}]},
+  7:{name:'Bob W.',emoji:'🔧',since:'May 2021',sales:6,listings:2,rating:'4.5',response:'~4hrs',badges:['verified'],reviews:[{stars:4,author:'Luis G.',date:'Jan 2026',text:'Tools work great. Bob was a bit slow to respond but all good.'}]},
+  8:{name:'Priya N.',emoji:'🎧',since:'Sep 2022',sales:9,listings:4,rating:'5.0',response:'< 45min',badges:['verified','trusted'],reviews:[{stars:5,author:'Alex P.',date:'Feb 2026',text:'Perfect condition headphones, Priya was fantastic to deal with.'},{stars:5,author:'Finn J.',date:'Jan 2026',text:'Exactly as described. One of the best sellers I\'ve met here.'}]},
+  9:{name:'Luis G.',emoji:'🚗',since:'Apr 2020',sales:2,listings:1,rating:'4.8',response:'~2hrs',badges:['verified'],reviews:[{stars:5,author:'Chris M.',date:'Mar 2026',text:'Car was exactly as described, clean and runs great.'}]},
 };
 
 const conversations = [
@@ -654,6 +648,20 @@ const conversations = [
   ]},
 ];
 
+// Light, visible background colors for card thumbnails
+var catColors = {
+  'Electronics':'#dbeafe',
+  'Vehicles':'#fee2e2',
+  'Furniture':'#fef9c3',
+  'Clothing':'#f3e8ff',
+  'Garden':'#dcfce7',
+  'Sports':'#d1fae5',
+  'Tools':'#ffedd5',
+  'Books':'#e0f2fe',
+  'Free':'#dcfce7',
+  'Other':'#f1f5f9'
+};
+
 var catEmojis = {Electronics:"📱",Vehicles:"🚗",Furniture:"🛋️",Clothing:"👗",Garden:"🌿",Sports:"⚽",Tools:"🔧",Books:"📚",Free:"🎁",Other:"📦"};
 var currentCat = "All";
 var activeListings = allListings.slice();
@@ -664,6 +672,7 @@ var markers = [];
 document.getElementById("liveDate").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 
 function getEmoji(l){ return catEmojis[l.cat] || "📦"; }
+function getBg(cat){ return catColors[cat] || '#f1f5f9'; }
 
 function renderListings(data) {
   var grid = document.getElementById("listingsGrid");
@@ -677,8 +686,7 @@ function renderListings(data) {
     var l = data[i];
     var price = l.price === 0 ? "FREE" : "$" + l.price.toLocaleString();
     var city = l.location.split(",")[0];
-    var catColors = {'Electronics':'#1a1a2e','Vehicles':'#1a0a00','Furniture':'#2a1f00','Clothing':'#1a0020','Garden':'#001a05','Sports':'#001a1a','Tools':'#1a0a00','Books':'#00101a','Free':'#0a1a00'};
-    var bg = catColors[l.cat] || '#1a1a1a';
+    var bg = getBg(l.cat);
     var imgHtml = "<div style='width:100%;height:100%;background:" + bg + ";display:flex;align-items:center;justify-content:center;font-size:52px'>" + getEmoji(l) + "</div>";
     var badge = "";
     if (l.badge === "hot") badge = "<div class='ad-badge badge-hot'>Hot</div>";
@@ -779,10 +787,13 @@ function openDetail(id) {
   document.getElementById("detailPrice").textContent = l.price === 0 ? "FREE" : "$" + l.price.toLocaleString();
   document.getElementById("detailDesc").textContent = l.desc;
   var imgArea = document.getElementById("detailImgArea");
-  imgArea.innerHTML = "";
-  var catColors = {'Electronics':'#1a1a2e','Vehicles':'#200a00','Furniture':'#2a1f00','Clothing':'#20002a','Garden':'#002a0a','Sports':'#002a2a','Tools':'#1f0a00','Books':'#00152a','Free':'#0a2000'};
-  imgArea.style.cssText = "background:" + (catColors[l.cat]||'#1a1a1a') + ";display:flex;align-items:center;justify-content:center;font-size:90px;opacity:1";
+  imgArea.style.cssText = "background:" + getBg(l.cat) + ";display:flex;align-items:center;justify-content:center;font-size:90px;min-height:280px";
   imgArea.textContent = getEmoji(l);
+  document.getElementById("detailSeller").textContent = s.emoji + " " + s.name;
+  document.getElementById("detailRating").textContent = "⭐ " + s.rating + " · " + s.sales + " sales";
+  document.getElementById("detailAvatar").textContent = s.emoji;
+  document.getElementById("detailContactBtn").onclick = function(){ close_("detailModal"); openMessagesWithSeller(l.sellerId, l.id); };
+  document.getElementById("detailProfileBtn").onclick = function(){ close_("detailModal"); openProfile(l.sellerId); };
   open_("detailModal");
 }
 
@@ -881,10 +892,9 @@ function openProfile(sellerId) {
   document.getElementById("profileBadges").innerHTML = (s.badges||[]).map(function(b){ return "<div class='profile-badge " + bmap[b].cls + "'>" + bmap[b].label + "</div>"; }).join("");
   document.getElementById("profileListings").innerHTML = sl.slice(0,6).map(function(l) {
     var pr = l.price===0 ? "FREE" : "$"+l.price.toLocaleString();
-    var catColors2 = {'Electronics':'#1a1a2e','Vehicles':'#1a0a00','Furniture':'#2a1f00','Clothing':'#1a0020','Garden':'#001a05','Sports':'#001a1a','Tools':'#1a0a00','Books':'#00101a','Free':'#0a1a00'};
-    var thumb = "<div style='position:absolute;inset:0;background:" + (catColors2[l.cat]||'#1a1a1a') + ";display:flex;align-items:center;justify-content:center;font-size:28px'>" + getEmoji(l) + "</div>";
+    var thumb = "<div style='position:absolute;inset:0;background:" + getBg(l.cat) + ";display:flex;align-items:center;justify-content:center;font-size:28px'>" + getEmoji(l) + "</div>";
     return '<div class="profile-listing-thumb" onclick="openDetail('+l.id+')">'+thumb+'<div class="profile-listing-price">'+pr+'</div></div>';
-  }).join("")
+  }).join("");
   document.getElementById("profileReviews").innerHTML = (s.reviews||[]).map(function(r) {
     return "<div class='review-item'><div class='review-top'><span class='review-stars'>" + "⭐".repeat(r.stars) + "</span><span class='review-date'>" + r.date + "</span></div><div class='review-author'>" + r.author + "</div><div class='review-text'>" + r.text + "</div></div>";
   }).join("");
@@ -903,7 +913,7 @@ function submitAd() {
   var location = document.getElementById("newLocation").value.trim()||"Your City";
   var condition = document.getElementById("newCondition").value;
   if (!title||!cat||!desc||!email){showToast("Please fill in all required fields");return;}
-  var newAd = {id:Date.now(),title:title,cat:cat,price:price,condition:condition,location:location,lat:39.5+Math.random()*10-5,lng:-98.35+Math.random()*30-15,desc:desc,sellerId:1,badge:"new",posted:"Just now",img:null};
+  var newAd = {id:Date.now(),title:title,cat:cat,price:price,condition:condition,location:location,lat:39.5+Math.random()*10-5,lng:-98.35+Math.random()*30-15,desc:desc,sellerId:1,badge:"new",posted:"Just now"};
   allListings.unshift(newAd);
   activeListings = allListings.slice();
   close_("postModal");
