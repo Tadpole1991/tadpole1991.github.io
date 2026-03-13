@@ -3,10 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="Buy, sell and trade locally. Free to list, easy to use. Find electronics, vehicles, furniture, clothing and more near you."/>
+<meta name="robots" content="index, follow"/>
+<meta property="og:title" content="Classifieds — Buy, Sell, Trade"/>
+<meta property="og:description" content="The fastest way to buy and sell locally. Free to list, easy to use."/>
+<meta property="og:type" content="website"/>
 <title>Classifieds — Buy, Sell, Trade</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -322,7 +327,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
     <div class="header-actions">
       <button class="nav-icon-btn" onclick="openMessages()" title="Messages">
         &#x1F4AC;
-        <span class="nav-badge" id="msgBadge">3</span>
+        <span class="nav-badge" id="msgBadge">0</span>
       </button>
       <button class="nav-icon-btn" onclick="openMyProfile()" title="My Profile">&#x1F464;</button>
       <a href="#" class="btn-ghost" onclick="openAuth(event)">Sign In</a>
@@ -332,16 +337,16 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
 </header>
 
 <div class="cat-bar" id="catBar">
-  <button class="cat-item active" onclick="filterCat('All')">All</button>
-  <button class="cat-item" onclick="filterCat('Electronics')">&#x1F4F1; Electronics</button>
-  <button class="cat-item" onclick="filterCat('Vehicles')">&#x1F697; Vehicles</button>
-  <button class="cat-item" onclick="filterCat('Furniture')">&#x1F6CB; Furniture</button>
-  <button class="cat-item" onclick="filterCat('Clothing')">&#x1F457; Clothing</button>
-  <button class="cat-item" onclick="filterCat('Garden')">&#x1F33F; Garden</button>
-  <button class="cat-item" onclick="filterCat('Sports')">&#x26BD; Sports</button>
-  <button class="cat-item" onclick="filterCat('Tools')">&#x1F527; Tools</button>
-  <button class="cat-item" onclick="filterCat('Books')">&#x1F4DA; Books</button>
-  <button class="cat-item" onclick="filterCat('Free')">&#x1F381; Free</button>
+  <button class="cat-item active" data-cat="All" onclick="filterCat('All')">All</button>
+  <button class="cat-item" data-cat="Electronics" onclick="filterCat('Electronics')">&#x1F4F1; Electronics</button>
+  <button class="cat-item" data-cat="Vehicles" onclick="filterCat('Vehicles')">&#x1F697; Vehicles</button>
+  <button class="cat-item" data-cat="Furniture" onclick="filterCat('Furniture')">&#x1F6CB; Furniture</button>
+  <button class="cat-item" data-cat="Clothing" onclick="filterCat('Clothing')">&#x1F457; Clothing</button>
+  <button class="cat-item" data-cat="Sports" onclick="filterCat('Sports')">&#x26BD; Sports</button>
+  <button class="cat-item" data-cat="Tools" onclick="filterCat('Tools')">&#x1F527; Tools</button>
+  <button class="cat-item" data-cat="Free" onclick="filterCat('Free')">&#x1F381; Free</button>
+  <button class="cat-item" data-cat="Motorcycles" onclick="filterCat('Motorcycles')">&#x1F3CD;&#xFE0F; Motorcycles</button>
+  <button class="cat-item" data-cat="Homes" onclick="filterCat('Homes')">&#x1F3E0; Homes</button>
 </div>
 
 <div class="hero">
@@ -426,13 +431,13 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
     </div>
     <div class="listings-grid" id="listingsGrid"></div>
     <div class="pagination">
-      <button class="page-btn">&lsaquo;</button>
+      <button class="page-btn" onclick="showToast('Previous page')">&lsaquo;</button>
       <button class="page-btn active">1</button>
       <button class="page-btn" onclick="showToast('Page 2')">2</button>
       <button class="page-btn" onclick="showToast('Page 3')">3</button>
       <span style="padding:0 6px;line-height:36px;color:var(--muted);font-size:12px">&hellip;</span>
-      <button class="page-btn">12</button>
-      <button class="page-btn">&rsaquo;</button>
+      <button class="page-btn" onclick="showToast('Page 12')">12</button>
+      <button class="page-btn" onclick="showToast('Next page')">&rsaquo;</button>
     </div>
   </div>
 
@@ -453,11 +458,12 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
     </div>
     <div class="footer-col"><h4>Selling</h4><ul><li><a href="#">Post Free Ad</a></li><li><a href="#">Seller Tips</a></li><li><a href="#">Pricing</a></li><li><a href="#">Safety</a></li></ul></div>
     <div class="footer-col"><h4>Buying</h4><ul><li><a href="#">Browse All</a></li><li><a href="#">Saved Searches</a></li><li><a href="#">Buyer Protection</a></li><li><a href="#">Scam Alerts</a></li></ul></div>
-    <div class="footer-col"><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Contact</a></li><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Contact</a></li><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener noreferrer" style="opacity:0.3;font-size:10px">🔒 Admin Portal</a></li></ul></div>
   </div>
   <div class="footer-bottom">
     <span>&copy; 2026 Classifieds. All rights reserved.</span>
     <span>Free &middot; Fast &middot; Trusted</span>
+    <span>Becker Coded</span>
   </div>
 </footer>
 
@@ -729,25 +735,17 @@ const sellers = {
   9:{name:'Luis G.',emoji:'🚗',since:'Apr 2020',sales:2,listings:1,rating:'4.8',response:'~2hrs',badges:['verified'],reviews:[{stars:5,author:'Chris M.',date:'Mar 2026',text:'Car was exactly as described, clean and runs great.'}]},
 };
 
-const conversations = [
-  {id:1,sellerId:1,listingId:1,unread:2,messages:[
-    {from:'them',text:"Hi! Is the iPhone still available?",time:'10:23 AM'},
-    {from:'me',text:"Yes it is! Just listed it this morning.",time:'10:25 AM'},
-    {from:'them',text:"Great — would you take $650 for it?",time:'10:28 AM'},
-    {from:'them',text:"I can pick up today if so 🙏",time:'10:29 AM'},
-  ]},
-  {id:2,sellerId:4,listingId:4,unread:1,messages:[
-    {from:'me',text:"Hey, is the MacBook available for viewing?",time:'Yesterday'},
-    {from:'them',text:"Absolutely, swing by anytime after 5pm.",time:'Yesterday'},
-    {from:'them',text:"Here's my address: 123 Oak St, LA",time:'Yesterday'},
-  ]},
-  {id:3,sellerId:6,listingId:6,unread:0,messages:[
-    {from:'me',text:"Love the jacket! What's the actual chest measurement?",time:'Mon'},
-    {from:'them',text:"It's about 42in chest, fits true to size.",time:'Mon'},
-    {from:'me',text:"Perfect, I'll take it. When can we meet?",time:'Mon'},
-    {from:'them',text:"Tomorrow noon works great — downtown coffee shop?",time:'Mon'},
-  ]},
-];
+const conversations = [];
+
+// Sanitize user-generated strings before injecting into innerHTML
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 // Light, visible background colors for card thumbnails
 var catColors = {
@@ -771,6 +769,7 @@ var map = null;
 var markers = [];
 
 document.getElementById("liveDate").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+document.getElementById("statListings").textContent = allListings.length;
 
 function getEmoji(l){ return catEmojis[l.cat] || "📦"; }
 function getBg(cat){ return catColors[cat] || '#f1f5f9'; }
@@ -789,7 +788,7 @@ function renderListings(data) {
     var city = l.location.split(",")[0];
     var bg = getBg(l.cat);
     var imgHtml = l.img
-      ? "<img src='" + l.img + "' alt='" + l.title + "' style='width:100%;height:100%;object-fit:cover;display:block'/>"
+      ? "<img src='" + escapeHtml(l.img) + "' alt='" + escapeHtml(l.title) + "' style='width:100%;height:100%;object-fit:cover;display:block'/>"
       : "<div style='width:100%;height:100%;background:" + bg + ";display:flex;align-items:center;justify-content:center;font-size:52px'>" + getEmoji(l) + "</div>";
     var badge = "";
     if (l.badge === "hot") badge = "<div class='ad-badge badge-hot'>Hot</div>";
@@ -799,10 +798,10 @@ function renderListings(data) {
     html += "<div class='ad-card' onclick='openDetail(" + l.id + ")'>";
     html += "<div class='ad-image'>" + imgHtml + badge + "<button class='ad-fav' onclick='toggleFav(event,this)'>&#9825;</button></div>";
     html += "<div class='ad-body'>";
-    html += "<div class='ad-category'>" + l.cat + "</div>";
-    html += "<div class='ad-title'>" + l.title + "</div>";
-    html += "<div class='ad-desc'>" + l.desc + "</div>";
-    html += "<div class='ad-footer'><div class='" + priceClass + "'>" + price + "</div><div class='ad-meta'>" + city + "<br>" + l.posted + "</div></div>";
+    html += "<div class='ad-category'>" + escapeHtml(l.cat) + "</div>";
+    html += "<div class='ad-title'>" + escapeHtml(l.title) + "</div>";
+    html += "<div class='ad-desc'>" + escapeHtml(l.desc) + "</div>";
+    html += "<div class='ad-footer'><div class='" + priceClass + "'>" + price + "</div><div class='ad-meta'>" + escapeHtml(city) + "<br>" + escapeHtml(l.posted) + "</div></div>";
     html += "</div></div>";
   }
   grid.innerHTML = html;
@@ -811,7 +810,7 @@ function renderListings(data) {
 function filterCat(cat) {
   currentCat = cat;
   document.querySelectorAll(".cat-item").forEach(function(b) {
-    b.classList.toggle("active", b.textContent.trim() === cat || (cat === "All" && b.textContent.trim() === "All"));
+    b.classList.toggle("active", b.getAttribute("data-cat") === cat);
   });
   activeListings = cat === "All" ? allListings.slice() : allListings.filter(function(l){ return l.cat === cat; });
   renderListings(activeListings);
@@ -828,10 +827,10 @@ function doSearch() {
 function handleSearch(e) { if (e.key === "Enter") doSearch(); }
 
 function sortListings(val) {
-  var base = activeListings.slice();
-  if (val === "price_asc") base.sort(function(a,b){ return a.price - b.price; });
-  else if (val === "price_desc") base.sort(function(a,b){ return b.price - a.price; });
-  renderListings(base);
+  if (val === "price_asc") activeListings.sort(function(a,b){ return a.price - b.price; });
+  else if (val === "price_desc") activeListings.sort(function(a,b){ return b.price - a.price; });
+  else activeListings.sort(function(a,b){ return b.id - a.id; }); // newest = highest id for new posts
+  renderListings(activeListings);
 }
 
 function setView(v) {
@@ -843,7 +842,7 @@ function setView(v) {
 function toggleFav(e, btn) {
   e.stopPropagation();
   btn.classList.toggle("faved");
-  btn.textContent = btn.classList.contains("faved") ? "♥" : "♡";
+  btn.textContent = btn.classList.contains("faved") ? "\u2665" : "\u2661";
   showToast(btn.classList.contains("faved") ? "Saved to favorites" : "Removed from favorites");
 }
 
@@ -870,14 +869,14 @@ function renderMapMarkers(data) {
     if (!l.lat || !l.lng) return;
     var icon = L.divIcon({className:"",html:"<div style='background:" + (l.price===0?"#1a7a4a":"#d93025") + ";color:white;padding:4px 8px;font-family:Bebas Neue,sans-serif;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.3)'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div>",iconAnchor:[20,16]});
     var m = L.marker([l.lat, l.lng], {icon:icon}).addTo(map);
-    m.bindPopup("<div class='popup-title'>" + l.title + "</div><div class='popup-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div><div style='font-size:11px;color:#7a7168'>" + l.location + "</div><button class='popup-btn' onclick='openDetail(" + l.id + ")'>View Listing</button>");
+    m.bindPopup("<div class='popup-title'>" + escapeHtml(l.title) + "</div><div class='popup-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div><div style='font-size:11px;color:#7a7168'>" + escapeHtml(l.location) + "</div><button class='popup-btn' onclick='openDetail(" + l.id + ")'>View Listing</button>");
     markers.push(m);
   });
 }
 
 function renderMapList(data) {
   document.getElementById("mapListingsList").innerHTML = data.map(function(l) {
-    return "<div class='map-listing-item' onclick='openDetail(" + l.id + ")'><div style='display:flex;justify-content:space-between;gap:8px'><div><div class='map-listing-title'>" + l.title + "</div><div class='map-listing-loc'>" + l.location + "</div></div><div class='map-listing-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>";
+    return "<div class='map-listing-item' onclick='openDetail(" + l.id + ")'><div style='display:flex;justify-content:space-between;gap:8px'><div><div class='map-listing-title'>" + escapeHtml(l.title) + "</div><div class='map-listing-loc'>" + escapeHtml(l.location) + "</div></div><div class='map-listing-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>";
   }).join("");
 }
 
@@ -897,7 +896,11 @@ function openDetail(id) {
     imgArea.style.cssText = "background:" + getBg(l.cat) + ";display:flex;align-items:center;justify-content:center;font-size:90px;min-height:280px";
     imgArea.textContent = getEmoji(l);
   }
-  document.getElementById("detailSeller").textContent = s.emoji + " " + s.name;
+  document.getElementById("detailMeta").innerHTML =
+    "<div><div class='detail-meta-key'>Condition</div><div class='detail-meta-val'>" + escapeHtml(l.condition||"—") + "</div></div>" +
+    "<div><div class='detail-meta-key'>Location</div><div class='detail-meta-val'>" + escapeHtml(l.location||"—") + "</div></div>" +
+    "<div><div class='detail-meta-key'>Category</div><div class='detail-meta-val'>" + escapeHtml(l.cat||"—") + "</div></div>" +
+    "<div><div class='detail-meta-key'>Posted</div><div class='detail-meta-val'>" + escapeHtml(l.posted||"—") + "</div></div>";
   document.getElementById("detailRating").textContent = "⭐ " + s.rating + " · " + s.sales + " sales";
   document.getElementById("detailAvatar").textContent = s.emoji;
   document.getElementById("detailContactBtn").onclick = function(){ close_("detailModal"); openMessagesWithSeller(l.sellerId, l.id); };
@@ -926,10 +929,10 @@ function renderThreads() {
     var l = allListings.filter(function(x){ return x.id === c.listingId; })[0];
     var last = c.messages[c.messages.length - 1];
     return "<div class='thread-item" + (activeThread===c.id?" active":"") + "' onclick='selectThread(" + c.id + ")'>" +
-      "<div class='thread-flex'><div class='thread-avatar'>" + s.emoji + "</div><div style='flex:1;min-width:0'>" +
-      "<div class='thread-row1'><span class='thread-name'>" + s.name + "</span><span class='thread-time'>" + last.time + "</span></div>" +
-      "<div class='thread-preview'>" + (last.from==="me"?"You: ":"") + last.text + "</div>" +
-      (l ? "<div style='font-size:10px;color:var(--muted);margin-top:2px'>" + l.title.substring(0,28) + "...</div>" : "") +
+      "<div class='thread-flex'><div class='thread-avatar'>" + escapeHtml(s.emoji) + "</div><div style='flex:1;min-width:0'>" +
+      "<div class='thread-row1'><span class='thread-name'>" + escapeHtml(s.name) + "</span><span class='thread-time'>" + escapeHtml(last.time) + "</span></div>" +
+      "<div class='thread-preview'>" + (last.from==="me"?"You: ":"") + escapeHtml(last.text) + "</div>" +
+      (l ? "<div style='font-size:10px;color:var(--muted);margin-top:2px'>" + (l.title.length > 28 ? escapeHtml(l.title.substring(0,28)) + "\u2026" : escapeHtml(l.title)) + "</div>" : "") +
       "</div></div>" + (c.unread > 0 && activeThread !== c.id ? "<div class='thread-unread'></div>" : "") + "</div>";
   }).join("");
 }
@@ -1015,15 +1018,19 @@ function openPostModal(){ open_("postModal"); }
 function submitAd() {
   var title = document.getElementById("newTitle").value.trim();
   var cat = document.getElementById("newCat").value;
-  var price = parseInt(document.getElementById("newPrice").value)||0;
+  var price = Math.max(0, parseInt(document.getElementById("newPrice").value)||0);
   var desc = document.getElementById("newDesc").value.trim();
   var email = document.getElementById("newEmail").value.trim();
   var location = document.getElementById("newLocation").value.trim()||"Your City";
   var condition = document.getElementById("newCondition").value;
   if (!title||!cat||!desc||!email){showToast("Please fill in all required fields");return;}
+  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email)){showToast("Please enter a valid email address");return;}
+  if (title.length > 120){showToast("Title must be 120 characters or less");return;}
   var newAd = {id:Date.now(),title:title,cat:cat,price:price,condition:condition,location:location,lat:39.5+Math.random()*10-5,lng:-98.35+Math.random()*30-15,desc:desc,sellerId:1,badge:"new",posted:"Just now"};
   allListings.unshift(newAd);
   activeListings = allListings.slice();
+  document.getElementById("statListings").textContent = allListings.length;
   close_("postModal");
   filterCat("All");
   showToast("Ad published successfully!");
@@ -1054,6 +1061,8 @@ function showToast(msg){
 }
 
 renderListings(allListings);
+// Sync message badge with actual unread count on load
+document.getElementById("msgBadge").textContent = conversations.reduce(function(s,c){ return s+c.unread; },0);
 </script>
 </body>
 </html>
