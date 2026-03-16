@@ -814,7 +814,7 @@ function renderListings(data) {
     else if (l.badge === "new") badge = "<div class='ad-badge badge-new'>New</div>";
     else if (l.badge === "sale") badge = "<div class='ad-badge badge-sale'>Sale</div>";
     var priceClass = l.price === 0 ? "ad-price free" : "ad-price";
-    html += "<div class='ad-card' onclick='openDetail(" + l.id + ")'>";
+    html += "<div class='ad-card' onclick='openDetail(\"" + l.id + "\")'>";
     html += "<div class='ad-image'>" + imgHtml + badge + "<button class='ad-fav' onclick='toggleFav(event,this)'>&#9825;</button></div>";
     html += "<div class='ad-body'>";
     html += "<div class='ad-category'>" + escapeHtml(l.cat) + "</div>";
@@ -915,19 +915,21 @@ function renderMapMarkers(data) {
     if (!l.lat || !l.lng) return;
     var icon = L.divIcon({className:"",html:"<div style='background:" + (l.price===0?"#1a7a4a":"#d93025") + ";color:white;padding:4px 8px;font-family:Bebas Neue,sans-serif;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.3)'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div>",iconAnchor:[20,16]});
     var m = L.marker([l.lat, l.lng], {icon:icon}).addTo(map);
-    m.bindPopup("<div class='popup-title'>" + escapeHtml(l.title) + "</div><div class='popup-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div><div style='font-size:11px;color:#7a7168'>" + escapeHtml(l.location) + "</div><button class='popup-btn' onclick='openDetail(" + l.id + ")'>View Listing</button>");
+    m.bindPopup("<div class='popup-title'>" + escapeHtml(l.title) + "</div><div class='popup-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div><div style='font-size:11px;color:#7a7168'>" + escapeHtml(l.location) + "</div><button class='popup-btn' onclick='openDetail(\"" + l.id + "\")'>View Listing</button>");
     markers.push(m);
   });
 }
 
 function renderMapList(data) {
   document.getElementById("mapListingsList").innerHTML = data.map(function(l) {
-    return "<div class='map-listing-item' onclick='openDetail(" + l.id + ")'><div style='display:flex;justify-content:space-between;gap:8px'><div><div class='map-listing-title'>" + escapeHtml(l.title) + "</div><div class='map-listing-loc'>" + escapeHtml(l.location) + "</div></div><div class='map-listing-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>";
+    return "<div class='map-listing-item' onclick='openDetail(\"" + l.id + "\")'><div style='display:flex;justify-content:space-between;gap:8px'><div><div class='map-listing-title'>" + escapeHtml(l.title) + "</div><div class='map-listing-loc'>" + escapeHtml(l.location) + "</div></div><div class='map-listing-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>";
   }).join("");
 }
 
 function openDetail(id) {
-  var l = activeListings.filter(function(x){ return x.id === id; })[0];
+  console.log("openDetail called:", id, typeof id, "listings:", activeListings.length);
+  var l = activeListings.filter(function(x){ return String(x.id) === String(id); })[0];
+  console.log("found:", l ? l.title : "NOT FOUND");
   if (!l) return;
   var s = sellers[l.sellerId] || {name:"Unknown",emoji:"👤",rating:"N/A",sales:0};
   document.getElementById("detailCat").textContent = l.cat + " · " + l.condition + " · " + l.location;
@@ -949,6 +951,7 @@ function openDetail(id) {
     "<div><div class='detail-meta-key'>Posted</div><div class='detail-meta-val'>" + escapeHtml(l.posted||"—") + "</div></div>";
   document.getElementById("detailRating").textContent = "⭐ " + s.rating + " · " + s.sales + " sales";
   document.getElementById("detailAvatar").textContent = s.emoji;
+  document.getElementById("detailSeller").textContent = s.name;
   document.getElementById("detailContactBtn").onclick = function(){ close_("detailModal"); openMessagesWithSeller(l.sellerId, l.id); };
   document.getElementById("detailProfileBtn").onclick = function(){ close_("detailModal"); openProfile(l.sellerId); };
   var soldBtn = document.getElementById("detailSoldBtn");
@@ -1025,7 +1028,7 @@ function selectThread(id) {
   document.getElementById("msgMain").innerHTML =
     "<div class='msg-chat-hdr'><div class='msg-chat-avatar'>" + escapeHtml(s.emoji) + "</div><div><div class='msg-chat-name'>" + escapeHtml(s.name) + "</div>" +
     (l ? "<div class='msg-chat-item'>" + escapeHtml(l.title) + "</div>" : "") + "</div></div>" +
-    (l ? "<div style='padding:8px 14px;background:var(--cream);border-bottom:1px solid var(--border);cursor:pointer' onclick='openDetail(" + l.id + ")'><div class='msg-item-ref'><div class='msg-item-ref-title'>" + escapeHtml(l.title) + "</div><div class='msg-item-ref-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>" : "") +
+    (l ? "<div style='padding:8px 14px;background:var(--cream);border-bottom:1px solid var(--border);cursor:pointer' onclick='openDetail(\"" + l.id + "\")'><div class='msg-item-ref'><div class='msg-item-ref-title'>" + escapeHtml(l.title) + "</div><div class='msg-item-ref-price'>" + (l.price===0?"FREE":"$"+l.price.toLocaleString()) + "</div></div></div>" : "") +
     "<div class='msg-body' id='msgBody'><div class='msg-date-divider'><span>Today</span></div>" +
     conv.messages.map(function(m) {
       if (m.from === "system") return "<div style='text-align:center;font-size:11px;color:var(--muted);padding:4px'>" + escapeHtml(m.text) + "</div>";
@@ -1098,7 +1101,7 @@ function openProfile(sellerId) {
   document.getElementById("profileListings").innerHTML = sl.slice(0,6).map(function(l) {
     var pr = l.price===0 ? "FREE" : "$"+l.price.toLocaleString();
     var thumb = "<div style='position:absolute;inset:0;background:" + getBg(l.cat) + ";display:flex;align-items:center;justify-content:center;font-size:28px'>" + getEmoji(l) + "</div>";
-    return '<div class="profile-listing-thumb" onclick="openDetail('+l.id+')">'+thumb+'<div class="profile-listing-price">'+pr+'</div></div>';
+    return '<div class="profile-listing-thumb" onclick="openDetail(\''+l.id+'\')">'+thumb+'<div class="profile-listing-price">'+pr+'</div></div>';
   }).join("");
   document.getElementById("profileReviews").innerHTML = (s.reviews||[]).map(function(r) {
     return "<div class='review-item'><div class='review-top'><span class='review-stars'>" + "⭐".repeat(r.stars) + "</span><span class='review-date'>" + r.date + "</span></div><div class='review-author'>" + r.author + "</div><div class='review-text'>" + r.text + "</div></div>";
