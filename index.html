@@ -1118,7 +1118,8 @@ function openPostModal(){
 async function submitAd() {
   var title     = document.getElementById("newTitle").value.trim();
   var cat       = document.getElementById("newCat").value;
-  var price     = Math.max(0, parseInt(document.getElementById("newPrice").value)||0);
+  var priceRaw = document.getElementById("newPrice").value.trim();
+  var price = priceRaw === "" ? 0 : Math.max(0, parseFloat(priceRaw) || 0);
   var desc      = document.getElementById("newDesc").value.trim();
   var email     = document.getElementById("newEmail").value.trim();
   var location  = document.getElementById("newLocation").value.trim()||"Your City";
@@ -1147,7 +1148,7 @@ async function submitAd() {
   var { error } = await sb.from("listings").insert({
     title:       title,
     category:    cat,
-    price:       price,
+    price:       Number(price),
     description: desc,
     condition:   condition,
     location:    location,
