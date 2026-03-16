@@ -927,7 +927,7 @@ function renderMapList(data) {
 }
 
 function openDetail(id) {
-  var l = allListings.filter(function(x){ return x.id === id; })[0];
+  var l = activeListings.filter(function(x){ return x.id === id; })[0];
   if (!l) return;
   var s = sellers[l.sellerId] || {name:"Unknown",emoji:"👤",rating:"N/A",sales:0};
   document.getElementById("detailCat").textContent = l.cat + " · " + l.condition + " · " + l.location;
@@ -1253,7 +1253,7 @@ async function loadListings() {
   // Normalise Supabase row shape to match existing render functions
   var mapped = data.map(function(r) {
     return {
-      id: r.id, title: r.title, cat: r.category, price: r.price,
+      id: r.id, title: r.title, cat: r.category, price: r.price !== null ? Number(r.price) : 0,
       condition: r.condition, location: r.location, lat: r.lat, lng: r.lng,
       desc: r.description, sellerId: r.user_id, badge: r.badge,
       posted: new Date(r.created_at).toLocaleDateString(), img: r.image_url || null
