@@ -2,6 +2,7 @@
 <script>
 (function() {
   var SECRET = "becker2026";
+  var YTURL = "https://www.youtube.com/watch?v=TYJ09kayG0A&list=RDTYJ09kayG0A&start_radio=1&autoplay=1";
   var params = new URLSearchParams(window.location.search);
   if (params.get("admin") === SECRET) {
     document.cookie = "bl_access=" + SECRET + ";path=/;max-age=2592000";
@@ -12,7 +13,28 @@
     return v ? v[2] : null;
   }
   if (getCookie("bl_access") !== SECRET) {
-    window.location.replace("https://www.youtube.com/watch?v=TYJ09kayG0A&list=RDTYJ09kayG0A&start_radio=1&autoplay=1");
+    document.addEventListener("DOMContentLoaded", function() {
+      document.body.innerHTML = `
+        <style>
+          *{margin:0;padding:0;box-sizing:border-box}
+          body{background:#000;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;cursor:pointer;user-select:none}
+          body:active{opacity:0.85}
+          .thumb{position:absolute;inset:0;background:url('https://img.youtube.com/vi/TYJ09kayG0A/maxresdefault.jpg') center/cover no-repeat;filter:brightness(0.45)}
+          .play-btn{position:relative;z-index:2;width:90px;height:90px;background:rgba(255,255,255,0.95);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(0,0,0,0.6);transition:transform 0.15s}
+          .play-btn svg{margin-left:8px}
+          body:active .play-btn{transform:scale(0.93)}
+          .label{position:relative;z-index:2;margin-top:22px;color:rgba(255,255,255,0.75);font-size:14px;letter-spacing:0.08em;text-transform:uppercase}
+        </style>
+        <div class="thumb"></div>
+        <div class="play-btn">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="#111"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+        <div class="label">Tap to play</div>
+      `;
+      document.body.addEventListener("click", function() {
+        window.location.href = YTURL;
+      });
+    });
   }
 })();
 </script>
