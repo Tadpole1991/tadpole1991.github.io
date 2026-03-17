@@ -1139,6 +1139,18 @@ async function submitAd() {
   }
 
   showToast("Publishing your ad…");
+  // Geocode location to lat/lng using Nominatim
+  var lat = null, lng = null;
+  if (location && location !== "Your City") {
+    try {
+      var geoRes = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(location));
+      var geoData = await geoRes.json();
+      if (geoData && geoData.length > 0) {
+        lat = parseFloat(geoData[0].lat);
+        lng = parseFloat(geoData[0].lon);
+      }
+    } catch(e) { /* geocode failed, continue without coords */ }
+  }
   var { error } = await sb.from("listings").insert({
     title:       title,
     category:    cat,
@@ -1146,6 +1158,8 @@ async function submitAd() {
     description: desc,
     condition:   condition,
     location:    location,
+    lat:         lat,
+    lng:         lng,
     contact_email: email,
     user_id:     currentUser,
     status:      "active",
