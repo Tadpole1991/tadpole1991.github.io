@@ -1051,12 +1051,6 @@ function sendMsg(cid) {
   conv.messages.push({from:"me",text:text,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});
   input.value = "";
   selectThread(cid);
-  setTimeout(function() {
-    var replies = ["Thanks! I will get back to you shortly.","Sure, that works!","Can you go a little lower?","I can meet tomorrow afternoon.","The item is exactly as described."];
-    conv.messages.push({from:"them",text:replies[Math.floor(Math.random()*replies.length)],time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});
-    if (activeThread === cid) selectThread(cid);
-    else { conv.unread++; document.getElementById("msgBadge").textContent = conversations.reduce(function(s,c){ return s+c.unread; },0); }
-  }, 1800);
 }
 
 function showOfferPrompt(cid) {
