@@ -1,4 +1,24 @@
 <!DOCTYPE html>
+<script>
+(function() {
+  var SECRET = "becker2026";
+  var params = new URLSearchParams(window.location.search);
+  if (params.get("admin") === SECRET) {
+    document.cookie = "bl_access=" + SECRET + ";path=/;max-age=2592000";
+    window.history.replaceState({}, "", window.location.pathname);
+  }
+  function getCookie(name) {
+    var v = document.cookie.match("(^|;) ?" + name + "=([^;]*)(;|$)");
+    return v ? v[2] : null;
+  }
+  if (getCookie("bl_access") !== SECRET) {
+    document.addEventListener("DOMContentLoaded", function() {
+      document.body.innerHTML = '<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;width:100vw;height:100vh;overflow:hidden}iframe{width:100vw;height:100vh;border:none}</style>' +
+        '<iframe src="https://www.youtube.com/embed/TYJ09kayG0A?autoplay=1&mute=0&controls=1&list=RDTYJ09kayG0A&listType=playlist&start_radio=1" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+    });
+  }
+})();
+</script>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
