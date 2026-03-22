@@ -233,6 +233,7 @@ header{background:var(--ink);color:#fff;padding:0 32px;border-bottom:4px solid v
 .badge-verified{background:var(--green);color:#fff}
 .badge-trusted{background:var(--yellow);color:var(--ink)}
 .badge-seller{background:var(--blue);color:#fff}
+.badge-admin{background:var(--red);color:#fff}
 .profile-listings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
 .profile-listing-thumb{background:var(--cream);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:opacity 0.15s;position:relative;overflow:hidden}
 .profile-listing-thumb:hover{opacity:0.85}
@@ -753,16 +754,16 @@ var supabaseProfiles = {};
 function getSellerInfo(sellerId) {
   // Your listings — matched when signed in
   if (currentUser && String(sellerId) === String(currentUser)) {
-    return {name:'tadpole91', emoji:'🏷️', since:'Jan 2022', rating:'4.9', sales:23, response:'< 1hr', badges:['verified','trusted'], reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'}]};
+    return {name:'tadpole91', emoji:'🏷️', since:'Jan 2022', rating:'0', sales:0, response:'< 1hr', badges:['verified','trusted','admin'], reviews:[]};
   }
   // Another registered user with a fetched profile
   var profile = supabaseProfiles[sellerId];
   if (profile) {
     var displayName = profile.full_name || profile.email || 'Member';
-    return {name:displayName, emoji:'👤', since:'—', rating:'—', sales:0, response:'—', badges:[], reviews:[]};
+    return {name:displayName, emoji:'👤', since:'—', rating:'0', sales:0, response:'—', badges:[], reviews:[]};
   }
   // No match yet — default to tadpole91 (only seller right now)
-  return {name:'tadpole91', emoji:'🏷️', since:'Jan 2022', rating:'4.9', sales:23, response:'< 1hr', badges:['verified','trusted'], reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'}]};
+  return {name:'tadpole91', emoji:'🏷️', since:'Jan 2022', rating:'0', sales:0, response:'< 1hr', badges:['verified','trusted','admin'], reviews:[]};
 }
 
 // Shim so any sellers[x] references still work
@@ -961,7 +962,7 @@ function openDetail(id) {
     "<div><div class='detail-meta-key'>Location</div><div class='detail-meta-val'>" + escapeHtml(l.location||"—") + "</div></div>" +
     "<div><div class='detail-meta-key'>Category</div><div class='detail-meta-val'>" + escapeHtml(l.cat||"—") + "</div></div>" +
     "<div><div class='detail-meta-key'>Posted</div><div class='detail-meta-val'>" + escapeHtml(l.posted||"—") + "</div></div>";
-  document.getElementById("detailRating").textContent = "⭐ " + s.rating + " · " + s.sales + " sales";
+  document.getElementById("detailRating").textContent = "⭐ " + s.rating + " · " + s.sales + " sale" + (s.sales === 1 ? "" : "s");
   document.getElementById("detailAvatar").textContent = s.emoji;
   document.getElementById("detailSeller").textContent = s.name;
   document.getElementById("detailContactBtn").onclick = function(){ close_("detailModal"); openMessagesWithSeller(l.sellerId, l.id); };
@@ -1069,16 +1070,19 @@ function openProfile(sellerId) {
   document.getElementById("pListings").textContent = sl.length;
   document.getElementById("pRating").textContent = s.rating;
   document.getElementById("pResponse").textContent = s.response;
-  var bmap = {verified:{label:"Verified",cls:"badge-verified"},trusted:{label:"Trusted",cls:"badge-trusted"},seller:{label:"Top Seller",cls:"badge-seller"}};
+  var bmap = {verified:{label:"Verified",cls:"badge-verified"},trusted:{label:"Trusted",cls:"badge-trusted"},seller:{label:"Top Seller",cls:"badge-seller"},admin:{label:"Admin",cls:"badge-admin"}};
   document.getElementById("profileBadges").innerHTML = (s.badges||[]).map(function(b){ return "<div class='profile-badge " + bmap[b].cls + "'>" + bmap[b].label + "</div>"; }).join("");
   document.getElementById("profileListings").innerHTML = sl.slice(0,6).map(function(l) {
     var pr = l.price===0 ? "FREE" : "$"+l.price.toLocaleString();
     var thumb = "<div style='position:absolute;inset:0;background:" + getBg(l.cat) + ";display:flex;align-items:center;justify-content:center;font-size:28px'>" + getEmoji(l) + "</div>";
     return '<div class="profile-listing-thumb" onclick="openDetail(\''+l.id+'\')">'+thumb+'<div class="profile-listing-price">'+pr+'</div></div>';
   }).join("");
-  document.getElementById("profileReviews").innerHTML = (s.reviews||[]).map(function(r) {
-    return "<div class='review-item'><div class='review-top'><span class='review-stars'>" + "⭐".repeat(r.stars) + "</span><span class='review-date'>" + r.date + "</span></div><div class='review-author'>" + r.author + "</div><div class='review-text'>" + r.text + "</div></div>";
-  }).join("");
+  var reviews = s.reviews || [];
+  document.getElementById("profileReviews").innerHTML = reviews.length
+    ? reviews.map(function(r) {
+        return "<div class='review-item'><div class='review-top'><span class='review-stars'>" + "⭐".repeat(r.stars) + "</span><span class='review-date'>" + r.date + "</span></div><div class='review-author'>" + r.author + "</div><div class='review-text'>" + r.text + "</div></div>";
+      }).join("")
+    : "<div style='font-size:12px;color:var(--muted);padding:10px 0'>No reviews yet.</div>";
   document.getElementById("profileMsgBtn").onclick = function(){ close_("profileModal"); openMessagesWithSeller(sellerId, sl[0]&&sl[0].id); };
   open_("profileModal");
 }
