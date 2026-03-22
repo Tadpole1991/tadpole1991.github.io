@@ -613,6 +613,23 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
   </div>
 </div>
 
+<!-- EDIT PHOTOS MODAL -->
+<div class="overlay" id="editPhotosModal" onclick="closeOnOverlay(event,'editPhotosModal')">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hdr"><span class="modal-title">Edit Photos</span><button class="modal-close" onclick="close_('editPhotosModal')">&#x00D7;</button></div>
+    <div class="modal-body">
+      <div id="editCurrentImg" style="margin-bottom:16px;text-align:center"></div>
+      <div class="img-upload" onclick="document.getElementById('editPhotoInput').click()" style="margin-bottom:12px">
+        <div class="img-upload-icon">&#x1F4F7;</div>
+        <div class="img-upload-text">Click to choose new photo</div>
+        <input type="file" id="editPhotoInput" accept="image/*" style="display:none" onchange="previewEditPhoto(this)"/>
+      </div>
+      <div id="editPhotoPreview" style="margin-bottom:16px;text-align:center"></div>
+      <button class="form-submit" onclick="saveEditedPhoto()">Save Photo &rarr;</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1300,6 +1317,54 @@ function updateAuthUI(user) {
 // ─────────────────────────────────────────────
 // MY LISTINGS — fetch only current user's listings
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// EDIT PHOTOS
+// ─────────────────────────────────────────────
+var _editListingId = null;
+
+function openEditPhotos(listingId) {
+  _editListingId = listingId;
+  document.getElementById("editPhotoInput").value = "";
+  document.getElementById("editPhotoPreview").innerHTML = "";
+  // Show current photo if any
+  var listing = activeListings.find(function(l){ return String(l.id) === String(listingId); });
+  var currentDiv = document.getElementById("editCurrentImg");
+  if (listing && listing.img) {
+    currentDiv.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Current Photo</div><img src="' + escapeHtml(listing.img) + '" style="width:100%;max-height:180px;object-fit:cover;border:1px solid var(--border)"/>';
+  } else {
+    currentDiv.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted)">No photo yet</div>';
+  }
+  open_("editPhotosModal");
+}
+
+function previewEditPhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById("editPhotoPreview").innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">New Photo</div><img src="' + e.target.result + '" style="width:100%;max-height:180px;object-fit:cover;border:2px solid var(--green)"/>';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveEditedPhoto() {
+  if (!_editListingId) return;
+  var file = document.getElementById("editPhotoInput").files[0];
+  if (!file) { showToast("Please choose a photo first"); return; }
+  showToast("Uploading photo…");
+  var ext = file.name.split('.').pop();
+  var path = "listings/" + _editListingId + "_" + Date.now() + "." + ext;
+  var { error: upError } = await sb.storage.from("listing-images").upload(path, file, { upsert: true });
+  if (upError) { showToast("Upload failed: " + upError.message); return; }
+  var { data: urlData } = sb.storage.from("listing-images").getPublicUrl(path);
+  var { error: dbError } = await sb.from("listings").update({ image_url: urlData.publicUrl }).eq("id", _editListingId).eq("user_id", currentUser);
+  if (dbError) { showToast("Could not save photo: " + dbError.message); return; }
+  close_("editPhotosModal");
+  showToast("Photo updated! ✓");
+  await loadMyListings();
+  await loadListings();
+}
+
 async function loadMyListings() {
   if (!currentUser) { showToast("Please sign in to view your listings"); return; }
   var { data, error } = await sb.from("listings").select("*").eq("user_id", currentUser).eq("status", "active").order("created_at", { ascending: false });
@@ -1323,8 +1388,10 @@ async function loadMyListings() {
     var city = l.location ? l.location.split(",")[0] : "";
     var imgHtml = l.img ? '<img src="' + escapeHtml(l.img) + '" loading="lazy"/>' : '<div class="ad-img-placeholder">' + (catEmojis[l.cat]||"📦") + '</div>';
     var badgeHtml = l.badge ? '<span class="ad-badge badge-' + l.badge + '">' + l.badge + '</span>' : "";
-    html += '<div class="ad-card" onclick="openDetail(' + l.id + ', ' + JSON.stringify(mapped).replace(/</g,'\\u003c') + ')">';
-    html += '<div class="ad-image">' + badgeHtml + imgHtml + '</div>';
+    html += '<div class="ad-card" onclick="openDetail(' + l.id + ')">';
+    html += '<div class="ad-image">' + badgeHtml + imgHtml;
+    html += '<button onclick="event.stopPropagation();openEditPhotos(\'' + l.id + '\')" style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;border:none;padding:5px 10px;font-size:10px;font-family:\'IBM Plex Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;z-index:2">&#x1F4F7; Edit Photos</button>';
+    html += '</div>';
     html += '<div class="ad-body"><div class="ad-category">' + escapeHtml(l.cat) + '</div>';
     html += '<div class="ad-title">' + escapeHtml(l.title) + '</div>';
     html += '<div class="ad-footer"><div class="ad-price' + (l.price===0?" free":"") + '">' + price + '</div>';
