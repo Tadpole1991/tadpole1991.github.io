@@ -353,6 +353,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
 <div class="view-tabs">
   <button class="view-tab active" id="tab-listings" onclick="switchMainView('listings')">&#x229E; Listings</button>
   <button class="view-tab" id="tab-map" onclick="switchMainView('map')">Map View</button>
+  <button class="view-tab" id="tab-mine" onclick="switchMainView('mine')" style="display:none">&#x1F3F7;&#xFE0F; My Listings</button>
 </div>
 
 <div class="main">
@@ -433,6 +434,19 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
       <div class="map-sidebar-header">Listings Near You</div>
       <div id="mapListingsList"></div>
     </div>
+  </div>
+
+  <div id="myListingsPanel" class="listings-panel" style="display:none">
+    <div class="listings-header">
+      <div class="listings-count"><strong id="myListingsCount">0</strong> of your listings</div>
+      <button class="btn-post" style="font-size:11px;padding:8px 16px" onclick="openPostModal()">+ Post New Ad</button>
+    </div>
+    <div id="myListingsEmpty" style="display:none;padding:60px;text-align:center;color:var(--muted)">
+      <div style="font-size:48px;margin-bottom:12px">📭</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.1em">You have no active listings</div>
+      <button class="btn-post" style="margin-top:16px" onclick="openPostModal()">Post Your First Ad Free</button>
+    </div>
+    <div class="listings-grid" id="myListingsGrid"></div>
   </div>
 </div>
 
@@ -885,11 +899,15 @@ function toggleFav(e, btn) {
 
 function switchMainView(v) {
   var isMap = v === "map";
-  document.getElementById("listingsPanel").style.display = isMap ? "none" : "block";
+  var isMine = v === "mine";
+  document.getElementById("listingsPanel").style.display = (!isMap && !isMine) ? "block" : "none";
   document.getElementById("mapContainer").classList.toggle("active", isMap);
-  document.getElementById("tab-listings").classList.toggle("active", !isMap);
+  document.getElementById("myListingsPanel").style.display = isMine ? "block" : "none";
+  document.getElementById("tab-listings").classList.toggle("active", !isMap && !isMine);
   document.getElementById("tab-map").classList.toggle("active", isMap);
+  document.getElementById("tab-mine").classList.toggle("active", isMine);
   if (isMap && !map) initMap();
+  if (isMine) loadMyListings();
 }
 
 var streetLayer = null;
@@ -1260,16 +1278,59 @@ function updateAuthUI(user) {
   var signInBtn  = document.getElementById("headerSignIn");
   var signOutBtn = document.getElementById("headerSignOut");
   var profileBtn = document.getElementById("headerProfile");
+  var mineTab    = document.getElementById("tab-mine");
   if (user) {
     var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
     signInBtn.style.display  = "none";
     signOutBtn.style.display = "inline-block";
     profileBtn.title = name;
+    mineTab.style.display = "inline-block";
   } else {
     signInBtn.style.display  = "inline-block";
     signOutBtn.style.display = "none";
     profileBtn.title = "My Profile";
+    mineTab.style.display = "none";
+    // If currently on my listings, switch back to all listings
+    if (document.getElementById("myListingsPanel").style.display === "block") {
+      switchMainView("listings");
+    }
   }
+}
+
+// ─────────────────────────────────────────────
+// MY LISTINGS — fetch only current user's listings
+// ─────────────────────────────────────────────
+async function loadMyListings() {
+  if (!currentUser) { showToast("Please sign in to view your listings"); return; }
+  var { data, error } = await sb.from("listings").select("*").eq("user_id", currentUser).eq("status", "active").order("created_at", { ascending: false });
+  if (error) { showToast("Could not load your listings"); return; }
+  var grid = document.getElementById("myListingsGrid");
+  var empty = document.getElementById("myListingsEmpty");
+  document.getElementById("myListingsCount").textContent = data.length;
+  if (!data.length) {
+    grid.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  var mapped = data.map(function(r) {
+    return { id:r.id, title:r.title, cat:r.category, price:r.price !== null ? Number(r.price) : 0, condition:r.condition, location:r.location, lat:r.lat, lng:r.lng, desc:r.description, sellerId:r.user_id, badge:r.badge, posted:new Date(r.created_at).toLocaleDateString(), img:r.image_url||null };
+  });
+  var html = "";
+  for (var i = 0; i < mapped.length; i++) {
+    var l = mapped[i];
+    var price = l.price === 0 ? "FREE" : "$" + l.price.toLocaleString();
+    var city = l.location ? l.location.split(",")[0] : "";
+    var imgHtml = l.img ? '<img src="' + escapeHtml(l.img) + '" loading="lazy"/>' : '<div class="ad-img-placeholder">' + (catEmojis[l.cat]||"📦") + '</div>';
+    var badgeHtml = l.badge ? '<span class="ad-badge badge-' + l.badge + '">' + l.badge + '</span>' : "";
+    html += '<div class="ad-card" onclick="openDetail(' + l.id + ', ' + JSON.stringify(mapped).replace(/</g,'\\u003c') + ')">';
+    html += '<div class="ad-image">' + badgeHtml + imgHtml + '</div>';
+    html += '<div class="ad-body"><div class="ad-category">' + escapeHtml(l.cat) + '</div>';
+    html += '<div class="ad-title">' + escapeHtml(l.title) + '</div>';
+    html += '<div class="ad-footer"><div class="ad-price' + (l.price===0?" free":"") + '">' + price + '</div>';
+    html += '<div class="ad-meta">' + escapeHtml(city) + '<br>' + escapeHtml(l.posted) + '</div></div></div></div>';
+  }
+  grid.innerHTML = html;
 }
 
 // ─────────────────────────────────────────────
