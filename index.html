@@ -468,7 +468,12 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
         <div><label class="form-label">Location</label><input class="form-input" id="newLocation" placeholder="City, State"/></div>
       </div>
       <div class="form-row"><label class="form-label">Description *</label><textarea class="form-textarea" id="newDesc" placeholder="Describe your item..."></textarea></div>
-      <div class="img-upload" onclick="showToast('Image upload coming soon')"><div class="img-upload-icon">&#x1F4F7;</div><div class="img-upload-text">Click to upload photos (up to 8)</div></div>
+      <div class="img-upload" onclick="document.getElementById('photoInput').click()">
+        <div class="img-upload-icon">&#x1F4F7;</div>
+        <div class="img-upload-text">Click to upload photos (up to 8)</div>
+        <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="previewPhotos(this)"/>
+      </div>
+      <div id="photoPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
       <div class="form-row"><label class="form-label">Your Email *</label><input class="form-input" id="newEmail" type="email" placeholder="Buyers contact you here"/></div>
       <button class="form-submit" onclick="submitAd()">Publish Ad Free &rarr;</button>
     </div>
@@ -1092,6 +1097,22 @@ function openPostModal(){
   if (!currentUser){ showToast("Please sign in to post an ad"); open_("authModal"); return; }
   open_("postModal");
 }
+function previewPhotos(input) {
+  var files = Array.from(input.files).slice(0, 8);
+  var preview = document.getElementById("photoPreview");
+  preview.innerHTML = "";
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = document.createElement("img");
+      img.src = e.target.result;
+      img.style.cssText = "width:72px;height:72px;object-fit:cover;border:1px solid var(--border)";
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitAd() {
   var title     = document.getElementById("newTitle").value.trim();
   var cat       = document.getElementById("newCat").value;
@@ -1122,6 +1143,23 @@ async function submitAd() {
   }
 
   showToast("Publishing your ad…");
+
+  // Upload photos to Supabase Storage
+  var imageUrls = [];
+  var photoFiles = Array.from(document.getElementById("photoInput").files).slice(0, 8);
+  if (photoFiles.length > 0) {
+    showToast("Uploading photos…");
+    for (var i = 0; i < photoFiles.length; i++) {
+      var file = photoFiles[i];
+      var ext = file.name.split('.').pop();
+      var path = "listings/" + Date.now() + "_" + i + "." + ext;
+      var { data: upData, error: upError } = await sb.storage.from("listing-images").upload(path, file, { upsert: true });
+      if (!upError) {
+        var { data: urlData } = sb.storage.from("listing-images").getPublicUrl(path);
+        imageUrls.push(urlData.publicUrl);
+      }
+    }
+  }
   // Geocode location to lat/lng using Nominatim
   var lat = null, lng = null;
   if (location && location !== "Your City") {
@@ -1146,12 +1184,15 @@ async function submitAd() {
     contact_email: email,
     user_id:     currentUser,
     status:      "active",
-    badge:       "new"
+    badge:       "new",
+    image_url:   imageUrls[0] || null
   });
   if (error) { showToast("Error posting ad: " + error.message); return; }
   close_("postModal");
   ["newTitle","newPrice","newDesc","newEmail","newLocation"].forEach(function(id){ document.getElementById(id).value=""; });
   document.getElementById("newCat").value="";
+  document.getElementById("photoInput").value="";
+  document.getElementById("photoPreview").innerHTML="";
   await loadListings();
   showToast("Ad published successfully!");
 }
