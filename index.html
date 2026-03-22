@@ -346,7 +346,7 @@ footer{background:var(--ink);color:rgba(255,255,255,0.5);padding:32px 32px 20px;
   <div class="hero-stats">
     <div class="stat"><strong id="statListings">32</strong>Active Listings</div>
     <div class="stat"><strong>12</strong>Added Today</div>
-    <div class="stat"><strong>1,284</strong>Total Members</div>
+    <div class="stat"><strong id="statMembers">…</strong>Total Members</div>
   </div>
 </div>
 
@@ -1310,6 +1310,16 @@ function showToast(msg){
 
   await loadListings();
   document.getElementById("msgBadge").textContent = "";
+
+  // Load real member count from Supabase profiles table
+  if (SUPABASE_URL.indexOf('YOUR_') === -1) {
+    var { count: memberCount, error: memberError } = await sb
+      .from("profiles")
+      .select("*", { count: "exact", head: true });
+    if (!memberError && memberCount !== null) {
+      document.getElementById("statMembers").textContent = memberCount.toLocaleString();
+    }
+  }
 })();
 
 </script>
