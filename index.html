@@ -1361,6 +1361,7 @@ async function saveEditedPhoto() {
   if (dbError) { showToast("Could not save photo: " + dbError.message); return; }
   close_("editPhotosModal");
   showToast("Photo updated! ✓");
+  await new Promise(function(r){ setTimeout(r, 800); });
   await loadMyListings();
   await loadListings();
 }
@@ -1386,7 +1387,8 @@ async function loadMyListings() {
     var l = mapped[i];
     var price = l.price === 0 ? "FREE" : "$" + l.price.toLocaleString();
     var city = l.location ? l.location.split(",")[0] : "";
-    var imgHtml = l.img ? '<img src="' + escapeHtml(l.img) + '" loading="lazy"/>' : '<div class="ad-img-placeholder">' + (catEmojis[l.cat]||"📦") + '</div>';
+    var imgSrc = l.img ? l.img + "?t=" + Date.now() : null;
+    var imgHtml = imgSrc ? '<img src="' + escapeHtml(imgSrc) + '" loading="lazy"/>' : '<div class="ad-img-placeholder">' + (catEmojis[l.cat]||"📦") + '</div>';
     var badgeHtml = l.badge ? '<span class="ad-badge badge-' + l.badge + '">' + l.badge + '</span>' : "";
     html += '<div class="ad-card" onclick="openDetail(' + l.id + ')">';
     html += '<div class="ad-image">' + badgeHtml + imgHtml;
