@@ -744,17 +744,29 @@ const allListings = [
   {id:32,title:'Acoustic Guitar — Yamaha FG800',cat:'Sports',price:110,condition:'Good',location:'Tucson, AZ',lat:32.2226,lng:-110.9747,desc:'Great beginner/intermediate guitar. Has been restrung recently. Includes soft case.',sellerId:4,badge:null,posted:'Yesterday',img:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80'},
 ];
 
-const sellers = {
-  1:{name:'tadpole91',emoji:'🏠',since:'Jan 2022',sales:23,listings:5,rating:'4.9',response:'< 1hr',badges:['verified','trusted'],reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'},{stars:5,author:'Kate B.',date:'Jan 2026',text:'Great seller, very communicative throughout the process.'}]},
-  2:{name:'tadpole91',emoji:'🌸',since:'Mar 2021',sales:11,listings:3,rating:'4.7',response:'~2hrs',badges:['verified'],reviews:[{stars:5,author:'Dana L.',date:'Feb 2026',text:'Lovely seller. Item was clean and ready for pickup.'},{stars:4,author:'Bob W.',date:'Dec 2025',text:'Good condition as described, smooth transaction.'}]},
-  3:{name:'tadpole91',emoji:'🚴',since:'Jun 2023',sales:4,listings:2,rating:'5.0',response:'< 30min',badges:['verified','trusted','seller'],reviews:[{stars:5,author:'Mike T.',date:'Mar 2026',text:'Incredible deal on the bike. Condition was even better than listed!'}]},
-  4:{name:'tadpole91',emoji:'💻',since:'Nov 2020',sales:17,listings:4,rating:'4.8',response:'~1hr',badges:['verified','trusted','seller'],reviews:[{stars:5,author:'Priya N.',date:'Feb 2026',text:'tadpole91 was extremely helpful and the MacBook works perfectly.'},{stars:4,author:'Ryan H.',date:'Jan 2026',text:'Fast, reliable seller. Packaged item really well.'}]},
-  5:{name:'tadpole91',emoji:'📦',since:'Aug 2022',sales:8,listings:3,rating:'4.6',response:'~3hrs',badges:['verified'],reviews:[{stars:5,author:'Emma S.',date:'Feb 2026',text:'tadpole91 was so generous. Boxes were in great shape.'}]},
-  6:{name:'tadpole91',emoji:'🧥',since:'Jan 2019',sales:31,listings:6,rating:'4.9',response:'< 1hr',badges:['verified','trusted','seller'],reviews:[{stars:5,author:'Tess V.',date:'Mar 2026',text:'The jacket is absolutely beautiful. tadpole91 is a true professional.'},{stars:5,author:'Owen F.',date:'Feb 2026',text:'Responsive and fair. A pleasure to buy from.'}]},
-  7:{name:'tadpole91',emoji:'🔧',since:'May 2021',sales:6,listings:2,rating:'4.5',response:'~4hrs',badges:['verified'],reviews:[{stars:4,author:'Luis G.',date:'Jan 2026',text:'Tools work great. tadpole91 was a bit slow to respond but all good.'}]},
-  8:{name:'tadpole91',emoji:'🎧',since:'Sep 2022',sales:9,listings:4,rating:'5.0',response:'< 45min',badges:['verified','trusted'],reviews:[{stars:5,author:'Alex P.',date:'Feb 2026',text:'Perfect condition headphones, tadpole91 was fantastic to deal with.'},{stars:5,author:'Finn J.',date:'Jan 2026',text:'Exactly as described. One of the best sellers I\'ve met here.'}]},
-  9:{name:'tadpole91',emoji:'🚗',since:'Apr 2020',sales:2,listings:1,rating:'4.8',response:'~2hrs',badges:['verified'],reviews:[{stars:5,author:'Chris M.',date:'Mar 2026',text:'Car was exactly as described, clean and runs great.'}]},
-};
+// Cache of other users' Supabase profiles: { userId: {full_name, email} }
+var supabaseProfiles = {};
+
+// Returns seller display info for a listing's sellerId.
+// - Your listings (matched by Supabase user_id) → tadpole91
+// - Everyone else → their own Supabase account name
+function getSellerInfo(sellerId) {
+  // Your listings — matched when signed in
+  if (currentUser && String(sellerId) === String(currentUser)) {
+    return {name:'tadpole91', emoji:'🏷️', since:'Jan 2022', rating:'4.9', sales:23, response:'< 1hr', badges:['verified','trusted'], reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'}]};
+  }
+  // Another registered user with a fetched profile
+  var profile = supabaseProfiles[sellerId];
+  if (profile) {
+    var displayName = profile.full_name || profile.email || 'Member';
+    return {name:displayName, emoji:'👤', since:'—', rating:'—', sales:0, response:'—', badges:[], reviews:[]};
+  }
+  // No match yet — default to tadpole91 (only seller right now)
+  return {name:'tadpole91', emoji:'🏷️', since:'Jan 2022', rating:'4.9', sales:23, response:'< 1hr', badges:['verified','trusted'], reviews:[{stars:5,author:'Jordan R.',date:'Feb 2026',text:'Super fast reply, item exactly as described. Would buy again!'}]};
+}
+
+// Shim so any sellers[x] references still work
+const sellers = new Proxy({}, { get: function(_, key) { return getSellerInfo(key); } });
 
 var conversations = []; // kept for legacy references
 
@@ -931,7 +943,7 @@ function openDetail(id) {
   var l = activeListings.filter(function(x){ return String(x.id) === String(id); })[0];
   console.log("found:", l ? l.title : "NOT FOUND");
   if (!l) return;
-  var s = sellers[l.sellerId] || {name:"Unknown",emoji:"👤",rating:"N/A",sales:0};
+  var s = getSellerInfo(l.sellerId);
   document.getElementById("detailCat").textContent = l.cat + " · " + l.condition + " · " + l.location;
   document.getElementById("detailTitle").textContent = l.title;
   document.getElementById("detailPrice").textContent = l.price === 0 ? "FREE" : "$" + l.price.toLocaleString();
@@ -998,7 +1010,7 @@ function openMessages() { showToast("Select a listing to contact the seller."); 
 
 function openMessagesWithSeller(sellerId, listingId) {
   var l = allListings.filter(function(x){ return x.id === listingId; })[0];
-  var s = sellers[sellerId] || {name:"Seller",emoji:"👤",rating:"N/A",response:"—"};
+  var s = getSellerInfo(sellerId);
   _contactListing = l;
   _contactSeller = s;
 
@@ -1048,12 +1060,12 @@ function sendViaEmail() {
 }
 
 function openProfile(sellerId) {
-  var s = sellers[sellerId]; if (!s) return;
+  var s = getSellerInfo(sellerId);
   document.getElementById("profileAvatar").textContent = s.emoji;
   document.getElementById("profileName").textContent = s.name;
-  document.getElementById("profileSince").textContent = "Member since " + s.since;
+  document.getElementById("profileSince").textContent = "Member since " + (s.since || "—");
   document.getElementById("pSales").textContent = s.sales;
-  var sl = allListings.filter(function(l){ return l.sellerId===sellerId; });
+  var sl = allListings.filter(function(l){ return String(l.sellerId)===String(sellerId); });
   document.getElementById("pListings").textContent = sl.length;
   document.getElementById("pRating").textContent = s.rating;
   document.getElementById("pResponse").textContent = s.response;
@@ -1238,6 +1250,14 @@ async function loadListings() {
       posted: new Date(r.created_at).toLocaleDateString(), img: r.image_url || null
     };
   });
+
+  // Fetch profiles for any seller that isn't the logged-in user (tadpole91)
+  var otherIds = [...new Set(mapped.map(function(r){ return r.sellerId; }).filter(function(id){ return id && id !== currentUser; }))];
+  if (otherIds.length) {
+    var { data: profiles } = await sb.from("profiles").select("id, full_name, email").in("id", otherIds);
+    if (profiles) profiles.forEach(function(p){ supabaseProfiles[p.id] = p; });
+  }
+
   activeListings = mapped;
   renderListings(activeListings);
   document.getElementById("statListings").textContent = mapped.length;
